@@ -78,6 +78,10 @@ try {
       require_once __DIR__ . '/../modules/elecciones/obtener_cupos_actuales.php';
       exit;
 
+    case 'obtener_elecciones':
+      require_once __DIR__ . '/../modules/tabla_eleccion/obtener_elecciones.php';
+      exit;
+
 
     // ✅ IMPORTAR ALUMNOS DESDE JSON (dos aliases)
     case 'alumnos_import_json':

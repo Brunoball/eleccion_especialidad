@@ -32,7 +32,9 @@ const Cupo = () => {
         setCargando(true);
         setError('');
         const data = await fetchJSON(`${API}?action=obtener_cupos`);
-        setEspecialidades(Array.isArray(data.especialidades) ? data.especialidades : []);
+        // Excluir AUSENTE del render
+        const lista = Array.isArray(data.especialidades) ? data.especialidades : [];
+        setEspecialidades(lista.filter(e => (e.nombre || '').toUpperCase() !== 'AUSENTE'));
         setEdits({});
       } catch (e) {
         console.error(e);
@@ -49,6 +51,7 @@ const Cupo = () => {
   }, []);
 
   const handleChange = (id, nombre, value) => {
+    // por seguridad, si llegara AUSENTE, lo fuerza a 0 y listo (aunque no se renderiza)
     if ((nombre || '').toUpperCase() === 'AUSENTE') {
       setEdits((p) => ({ ...p, [id]: 0 }));
       return;
@@ -58,7 +61,7 @@ const Cupo = () => {
   };
 
   const valorEditado = (id, actual) =>
-    Object.prototype.hasOwnProperty.call(edits, id) ? edits[id] : actual ?? 0;
+    Object.prototype.hasOwnProperty.call(edits, id) ? edits[id] : (actual ?? 0);
 
   const hayCambios = useMemo(
     () =>
@@ -82,9 +85,7 @@ const Cupo = () => {
         body: JSON.stringify({ id, cupo: Number(cupo) }),
       });
       setEspecialidades((prev) =>
-        prev.map((e) =>
-          e.id === id ? { ...e, cupo: e.nombre.toUpperCase() === 'AUSENTE' ? 0 : Number(cupo) } : e
-        )
+        prev.map((e) => (e.id === id ? { ...e, cupo: Number(cupo) } : e))
       );
       setEdits(({ [id]: _omit, ...rest }) => rest);
       alert('Cupo actualizado');
@@ -101,7 +102,7 @@ const Cupo = () => {
       .map((e) => {
         const nuevo = Object.prototype.hasOwnProperty.call(edits, e.id) ? edits[e.id] : undefined;
         if (nuevo === undefined || String(nuevo) === String(e.cupo ?? 0)) return null;
-        return { id: e.id, cupo: e.nombre.toUpperCase() === 'AUSENTE' ? 0 : Number(nuevo) };
+        return { id: e.id, cupo: Number(nuevo) };
       })
       .filter(Boolean);
 
@@ -116,10 +117,10 @@ const Cupo = () => {
       setEspecialidades((prev) =>
         prev.map((e) => {
           const item = payload.find((p) => p.id === e.id);
-          return item ? { ...e, cupo: e.nombre.toUpperCase() === 'AUSENTE' ? 0 : item.cupo } : e;
+          return item ? { ...e, cupo: item.cupo } : e;
         })
       );
-      setEdits({});
+      setEdits({ });
       alert('Cupos actualizados');
     } catch (e) {
       console.error(e);
@@ -148,12 +149,11 @@ const Cupo = () => {
         <button className="btn-primario" disabled={guardando || !hayCambios} onClick={guardarTodos}>
           {guardando ? 'Guardando…' : 'Guardar todos'}
         </button>
-        <button className="btn-volver" onClick={volver}>Volver al Dashboard</button>
+        <button className="btn-volver" onClick={volver}>Volver</button>
       </div>
 
       <div className="especialidades-grid">
         {especialidades.map((e) => {
-          const isAusente = (e.nombre || '').toUpperCase() === 'AUSENTE';
           const value = valorEditado(e.id, e.cupo);
           return (
             <div key={e.id} className="especialidad-card">
@@ -165,8 +165,8 @@ const Cupo = () => {
                   className="cupo-input"
                   type="number"
                   min={0}
-                  value={isAusente ? 0 : (value === '' ? '' : Number(value))}
-                  disabled={isAusente || guardando}
+                  value={value === '' ? '' : Number(value)}
+                  disabled={guardando}
                   onChange={(ev) => handleChange(e.id, e.nombre, ev.target.value)}
                 />
               </div>
@@ -177,7 +177,6 @@ const Cupo = () => {
               >
                 Guardar
               </button>
-              {isAusente && <small className="nota-ausente">AUSENTE no utiliza cupo (siempre 0)</small>}
             </div>
           );
         })}
