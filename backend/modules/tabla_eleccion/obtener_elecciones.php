@@ -22,19 +22,19 @@ try {
   $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
   $pdo->exec("SET NAMES utf8mb4");
 
-  // Trae cada elección con los datos del alumno y de la especialidad
+  // ✅ SIN prefijo de base: solo nombres de tabla
   $sql = "
     SELECT
-      e.id_eleccion                          AS id_eleccion,
-      e.id_alumno                            AS id_alumno,
-      e.id_especialidad                      AS id_especialidad,
-      a.alumno                               AS alumno,
-      a.dni                                  AS dni,
-      s.especialidad                         AS especialidad
-    FROM eleccion_especialidad.eleccion e
-      INNER JOIN eleccion_especialidad.alumnos a
+      e.id_eleccion      AS id_eleccion,
+      e.id_alumno        AS id_alumno,
+      e.id_especialidad  AS id_especialidad,
+      a.alumno           AS alumno,
+      a.dni              AS dni,
+      s.especialidad     AS especialidad
+    FROM `eleccion` e
+      INNER JOIN `alumnos` a
         ON a.id_alumno = e.id_alumno
-      INNER JOIN eleccion_especialidad.especialidad s
+      INNER JOIN `especialidad` s
         ON s.id_especialidad = e.id_especialidad
     ORDER BY e.id_eleccion ASC
   ";
@@ -45,13 +45,13 @@ try {
   $orden = 1;
   while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
     $data[] = [
-      'orden'            => $orden++,                              // posición en la lista
-      'id_eleccion'      => (int)$row['id_eleccion'],
-      'id_alumno'        => (int)$row['id_alumno'],
-      'id_especialidad'  => (int)$row['id_especialidad'],
-      'nombre'           => (string)$row['alumno'],
-      'dni'              => (string)$row['dni'],                    // como string por ser BIGINT
-      'especialidad'     => (string)$row['especialidad'],
+      'orden'           => $orden++,
+      'id_eleccion'     => (int)$row['id_eleccion'],
+      'id_alumno'       => (int)$row['id_alumno'],
+      'id_especialidad' => (int)$row['id_especialidad'],
+      'nombre'          => (string)$row['alumno'],
+      'dni'             => (string)$row['dni'],
+      'especialidad'    => (string)$row['especialidad'],
     ];
   }
 

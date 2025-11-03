@@ -1,0 +1,196 @@
+/* ========= Overlay ========= */
+.present-overlay{
+  position:fixed; inset:0; background:rgba(0,0,0,.55);
+  display:flex; align-items:center; justify-content:center; z-index:9999;
+}
+
+/* ========= Contenedor base + THEMING via variables ========= */
+.present-container{
+  width:min(1200px, 95vw); height:min(92vh, 900px);
+  border-radius:22px; overflow:hidden;
+  box-shadow:0 20px 60px rgba(0,0,0,.45);
+  display:flex; flex-direction:column;
+}
+
+/* Variables por tema */
+.theme-dark{
+  --bg-main:#0f1320;
+  --bg-header:#141a2b;
+  --border:#202743;
+  --text:#f7f7fb;
+  --muted:#d9d9e6;
+  --muted-2:#e3e6ff;
+
+  --card-bg:#121a33;
+  --card-border:#202743;
+  --card-hover:#2a3a7a;
+
+  --chip-bg:#1c2547;
+  --chip-border:#33406e;
+
+  --btn-nav-bg:#182144; --btn-nav-border:#2a3566; --btn-nav-text:#e7e9f3;
+  --btn-ok-bg:#2c7b3f;  --btn-ok-border:#3b9c55;  --btn-ok-text:#ffffff;
+  --btn-cancel-bg:#7a2e2e; --btn-cancel-border:#a34646; --btn-cancel-text:#ffffff;
+
+  --low-bg:#3a3207; --low-border:#bfa63a;
+  --agotado-bg:#3a1212; --agotado-border:#a34646;
+
+  --num-ok:#7ee787; --num-low:#ffd666; --num-no:#ff6b6b;
+  --warn:#ff8888;
+}
+.theme-light{
+  --bg-main:#ffffff;
+  --bg-header:#f6f7fb;
+  --border:#dfe3f0;
+  --text:#0e1320;
+  --muted:#3a3f55;
+  --muted-2:#4a5070;
+
+  --card-bg:#f7f8fd;
+  --card-border:#dfe3f0;
+  --card-hover:#9fb7ff; /* sólo para hover-borde */
+
+  --chip-bg:#eef1ff;
+  --chip-border:#cfd7ff;
+
+  --btn-nav-bg:#eef1ff; --btn-nav-border:#cfd7ff; --btn-nav-text:#1f2a55;
+  --btn-ok-bg:#1e8e3e;  --btn-ok-border:#2aa052;  --btn-ok-text:#ffffff;
+  --btn-cancel-bg:#c93434; --btn-cancel-border:#e05252; --btn-cancel-text:#ffffff;
+
+  --low-bg:#fff4cc; --low-border:#e7c54a;
+  --agotado-bg:#ffe0e0; --agotado-border:#e28a8a;
+
+  --num-ok:#0a8f55; --num-low:#b58500; --num-no:#c10f0f;
+  --warn:#c10f0f;
+}
+
+/* Aplicar variables a fondo y texto */
+.theme-dark,
+.theme-light{
+  background:var(--bg-main);
+  color:var(--text);
+}
+
+/* ========= Header ========= */
+.present-header{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:18px 22px; background:var(--bg-header); border-bottom:1px solid var(--border);
+}
+.present-header h2{ margin:0; font-size:22px; letter-spacing:.3px; color:var(--text); }
+
+.present-header-actions{
+  display:flex; align-items:center; gap:8px;
+}
+
+.present-close{
+  background:transparent; border:0; color:var(--muted); font-size:28px; line-height:1;
+  cursor:pointer; padding:4px 10px; border-radius:10px;
+}
+.theme-dark .present-close:hover{ background:#1b2240; }
+.theme-light .present-close:hover{ background:#edf0fb; }
+
+/* Botón toggle tema */
+.present-theme-toggle{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:36px; height:36px; border-radius:10px;
+  border:1px solid var(--border); background:transparent; color:var(--muted);
+  cursor:pointer;
+}
+.present-theme-toggle:hover{
+  filter:brightness(1.05);
+}
+
+/* ========= GRID de tarjetas ========= */
+.present-cupos{
+  display:grid; gap:10px; grid-template-columns:repeat(auto-fit, minmax(180px,1fr));
+  padding:14px 18px; background:var(--bg-main);
+}
+
+/* Reset y estilos base del botón-tarjeta */
+.present-cupo-card{
+  display:block; width:100%; text-align:left;
+  -webkit-appearance:none; appearance:none;
+  background:var(--card-bg); border:2px solid var(--card-border); border-radius:16px; padding:12px 14px;
+  transition:background .15s ease, border-color .15s ease, box-shadow .15s ease, transform .04s ease;
+  cursor:pointer; color:var(--text);
+}
+.present-cupo-card *{ color:inherit; }
+.present-cupo-card:hover{ border-color:var(--card-hover); }
+.present-cupo-card:active{ transform:scale(.995); }
+
+/* Estados de stock */
+.present-cupo-card.low{
+  background:var(--low-bg);
+  border-color:var(--low-border);
+  box-shadow:0 0 0 1px color-mix(in srgb, var(--low-border) 25%, transparent) inset;
+}
+.present-cupo-card.agotado{
+  background:var(--agotado-bg);
+  border-color:var(--agotado-border);
+  box-shadow:0 0 0 1px color-mix(in srgb, var(--agotado-border) 25%, transparent) inset;
+}
+
+/* Seleccionada */
+.present-cupo-card.selected{
+  box-shadow:0 0 0 2px #6aa3ff, 0 6px 20px rgba(28,100,242,.25);
+  border-color:#6aa3ff;
+}
+
+/* Deshabilitada (sin cupo o alumno ya inscripto) */
+.present-cupo-card.disabled{
+  cursor:not-allowed;
+  opacity:.75;
+}
+
+/* Contenido de tarjeta */
+.present-cupo-nombre{
+  font-weight:800; margin-bottom:6px; letter-spacing:.3px; text-transform:uppercase;
+}
+.present-cupo-disp{
+  color:var(--muted-2);
+}
+.present-cupo-disp strong.ok{ color:var(--num-ok); }
+.present-cupo-disp strong.low{ color:var(--num-low); }
+.present-cupo-disp strong.no{ color:var(--num-no); }
+
+/* ========= BODY ========= */
+.present-body{
+  flex:1; display:flex; flex-direction:column; gap:18px;
+  padding:20px 22px 24px; overflow:auto;
+}
+.present-empty{ text-align:center; opacity:.8; padding:40px 0; }
+
+.present-alumno{
+  text-align:center; padding:8px 0 2px;
+}
+.present-order{ opacity:.8; margin-bottom:6px; }
+.present-name{
+  font-size:44px; font-weight:800; letter-spacing:.5px; line-height:1.1;
+}
+.present-dni{ margin-top:6px; opacity:.9; }
+.present-inscripto{
+  margin-top:10px; display:inline-block; padding:6px 10px; border-radius:999px;
+  background:var(--chip-bg); border:1px solid var(--chip-border); font-size:14px;
+}
+
+/* ========= Acciones ========= */
+.present-actions{
+  display:flex; gap:12px; justify-content:center; align-items:center; margin-top:4px;
+}
+.present-nav{
+  background:var(--btn-nav-bg); border:1px solid var(--btn-nav-border); color:var(--btn-nav-text);
+  padding:10px 16px; border-radius:12px; cursor:pointer; min-width:140px;
+}
+.present-nav:disabled{ opacity:.5; cursor:not-allowed; }
+.present-confirm{
+  background:var(--btn-ok-bg); border:1px solid var(--btn-ok-border); color:var(--btn-ok-text);
+  padding:12px 22px; font-weight:700; border-radius:14px; min-width:180px; font-size:18px;
+}
+.present-confirm.disabled{ opacity:.5; cursor:not-allowed; }
+.present-cancel{
+  background:var(--btn-cancel-bg); border:1px solid var(--btn-cancel-border); color:var(--btn-cancel-text);
+  padding:12px 22px; font-weight:700; border-radius:14px; min-width:180px; font-size:18px;
+}
+
+/* Aviso sin cupo */
+.present-warning{ margin-top:10px; text-align:center; color:var(--warn); }

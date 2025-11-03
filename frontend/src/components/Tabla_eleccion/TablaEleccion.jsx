@@ -1,45 +1,95 @@
-import React, { useEffect, useState } from "react";
+// src/components/TablaEleccion/TablaEleccion.jsx
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../../config/config";
+import ModalConfirmarEliminar from "./modales/ModalConfirmarEliminar";
+import Toast from "../Global/Toast";
 
 /**
  * TablaEleccion:
  * - Lista ELECCIONES (JOIN: eleccion + alumnos + especialidad)
- * - Filtro por especialidad (de `obtener_listas` -> clave `especialidad`)
- * - Exporta a CSV (solo lo que se VE filtrado)
- * - Botón Volver a la principal (/panel)
+ * - Filtro por especialidad
+ * - Exporta a CSV (lo filtrado)
+ * - Eliminar TODO + reset de cupos_actuales (solo ADMIN)
+ * - Volver al panel
  */
 
 const TablaEleccion = () => {
   const navigate = useNavigate();
 
-  const [filas, setFilas] = useState([]);                   // obtener_elecciones
-  const [especialidades, setEspecialidades] = useState([]); // obtener_listas -> especialidad
+  const [filas, setFilas] = useState([]);
+  const [especialidades, setEspecialidades] = useState([]);
   const [filtro, setFiltro] = useState("todas");
 
+  const [openDel, setOpenDel] = useState(false);
+  const [delLoading, setDelLoading] = useState(false);
+  const [delError, setDelError] = useState("");
+
+  // ====== ROL (admin / vista) ======
+  const [usuario, setUsuario] = useState(null);
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // 1) Elecciones (JOIN de las 3 tablas)
-        const rElec = await fetch(`${BASE_URL}/api.php?action=obtener_elecciones`);
-        const jElec = await rElec.json();
-        if (jElec?.exito) setFilas(jElec.data || []);
+    try {
+      const u = JSON.parse(localStorage.getItem("usuario"));
+      setUsuario(u || null);
+    } catch {
+      setUsuario(null);
+    }
+  }, []);
+  const role = (usuario?.rol || "").toLowerCase();
+  const isAdmin = role === "admin";
 
-        // 2) Listas globales (para el select de especialidades)
-        const rList = await fetch(`${BASE_URL}/api.php?action=obtener_listas`);
-        const jList = await rList.json();
-        if (jList?.exito && Array.isArray(jList.especialidad)) {
-          setEspecialidades(jList.especialidad);
-        }
-      } catch (err) {
-        console.error("Error al cargar datos:", err);
+  /* ====== TOAST ROBUSTO ====== */
+  const [toast, setToast] = useState(null); // {tipo, mensaje, duracion, id}
+  const toastCtrl = useRef({ timer: null });
+  const clearToastTimer = () => {
+    if (toastCtrl.current.timer) {
+      clearTimeout(toastCtrl.current.timer);
+      toastCtrl.current.timer = null;
+    }
+  };
+  const showToast = (tipo, mensaje, duracion = 2800) => {
+    clearToastTimer();
+    setToast(null);
+    setTimeout(() => {
+      const id = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      setToast({ tipo, mensaje, duracion, id });
+      toastCtrl.current.timer = setTimeout(() => {
+        setToast((t) => (t && t.id === id ? null : t));
+        toastCtrl.current.timer = null;
+      }, Math.max(800, duracion + 100));
+    }, 0);
+  };
+  const handleToastClose = (id) => {
+    clearToastTimer();
+    setToast((t) => (t && t.id === id ? null : t));
+  };
+  useEffect(() => () => clearToastTimer(), []);
+  /* =========================== */
+
+  const fetchAll = useCallback(async () => {
+    try {
+      // 1) Elecciones
+      const rElec = await fetch(`${BASE_URL}/api.php?action=obtener_elecciones`);
+      const jElec = await rElec.json();
+      if (jElec?.exito) setFilas(jElec.data || []);
+      else throw new Error(jElec?.mensaje || "No se pudieron cargar las elecciones.");
+
+      // 2) Listas (especialidades para el filtro)
+      const rList = await fetch(`${BASE_URL}/api.php?action=obtener_listas`);
+      const jList = await rList.json();
+      if (jList?.exito && Array.isArray(jList.especialidad)) {
+        setEspecialidades(jList.especialidad);
+      } else {
+        throw new Error(jList?.mensaje || "No se pudieron cargar las especialidades.");
       }
-    };
-
-    fetchData();
+    } catch (err) {
+      console.error("Error al cargar datos:", err);
+      showToast("error", err.message || "No se pudo cargar la tabla.");
+    }
   }, []);
 
-  // ======= Filtro por especialidad =======
+  useEffect(() => { fetchAll(); }, [fetchAll]);
+
   const visibles =
     filtro === "todas"
       ? filas
@@ -47,41 +97,61 @@ const TablaEleccion = () => {
           (f) => (f.especialidad || "").toLowerCase() === filtro.toLowerCase()
         );
 
-  // ======= Exportar a CSV (solo lo visible) =======
   const exportarExcel = () => {
-    const SEP = ";"; // separador amigable para Excel ES/AR
-    const quote = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+    try {
+      const SEP = ";";
+      const quote = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+      const header = ["Orden", "Alumno", "DNI", "Especialidad"];
+      const rows = visibles.map((f) => [
+        f.orden,
+        (f.nombre || "").toUpperCase(),
+        f.dni || "",
+        f.especialidad || "",
+      ]);
+      const csv =
+        "\uFEFF" + [header, ...rows].map((row) => row.map(quote).join(SEP)).join("\n");
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "eleccion_especialidad.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast("exito", "Exportación generada correctamente.");
+    } catch (e) {
+      console.error(e);
+      showToast("error", "No se pudo exportar el archivo.");
+    }
+  };
 
-    const header = ["Orden", "Alumno", "DNI", "Especialidad"];
-    const rows = visibles.map((f) => [
-      f.orden,
-      (f.nombre || "").toUpperCase(),
-      f.dni || "",
-      f.especialidad || "",
-    ]);
-
-    const csv =
-      "\uFEFF" +
-      [header, ...rows]
-        .map((row) => row.map(quote).join(SEP))
-        .join("\n");
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "eleccion_especialidad.csv";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
+  const confirmarEliminar = async () => {
+    setDelError("");
+    setDelLoading(true);
+    try {
+      const res = await fetch(`${BASE_URL}/api.php?action=reset_elecciones`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ confirmar: true }),
+      });
+      const j = await res.json();
+      if (!res.ok || !j?.exito) {
+        throw new Error(j?.mensaje || "No se pudo eliminar.");
+      }
+      setOpenDel(false);
+      showToast("exito", j?.mensaje || "Se eliminó todo y se reiniciaron los cupos.");
+      await fetchAll(); // refrescar
+    } catch (e) {
+      setDelError(e.message);
+      showToast("error", e.message || "Error al eliminar.");
+    } finally {
+      setDelLoading(false);
+    }
   };
 
   return (
-    <div
-      className="tabla-eleccion"
-      style={{ padding: 20, backgroundColor: "#fff8c6", minHeight: "100vh" }}
-    >
+    <div className="tabla-eleccion" style={{ padding: 20, backgroundColor: "#fff8c6", minHeight: "100vh" }}>
       <h1 style={{ textAlign: "center", marginBottom: 20 }}>
         Elección de la Especialidad - Tablas
       </h1>
@@ -117,7 +187,8 @@ const TablaEleccion = () => {
           ))}
         </select>
 
-        <div style={{ display: "flex", gap: 10 }}>
+
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
           <button
             onClick={exportarExcel}
             style={{
@@ -133,9 +204,26 @@ const TablaEleccion = () => {
             Exportar a Excel
           </button>
 
-          {/* Volver a la principal */}
+          {/* 🔒 Solo ADMIN ve este botón */}
+          {isAdmin && (
+            <button
+              onClick={() => { setDelError(""); setOpenDel(true); }}
+              style={{
+                padding: "10px 20px",
+                background: "#d92d20",
+                color: "#fff",
+                border: "none",
+                borderRadius: 8,
+                cursor: "pointer",
+                fontWeight: 800,
+              }}
+            >
+              Eliminar todo
+            </button>
+          )}
+
           <button
-            onClick={() => navigate("/panel")} // principal definida en App.js
+            onClick={() => navigate("/panel")}
             style={{
               padding: "10px 20px",
               background: "#c26f16",
@@ -153,9 +241,7 @@ const TablaEleccion = () => {
 
       {/* Tabla */}
       <div style={{ overflowX: "auto" }}>
-        <table
-          style={{ width: "100%", borderCollapse: "collapse", background: "#fff" }}
-        >
+        <table style={{ width: "100%", borderCollapse: "collapse", background: "#fff" }}>
           <thead>
             <tr style={{ background: "#d7872f", color: "#fff" }}>
               <th style={th}>Orden</th>
@@ -166,10 +252,7 @@ const TablaEleccion = () => {
           </thead>
           <tbody>
             {visibles.map((f, i) => (
-              <tr
-                key={f.id_eleccion ?? i}
-                style={{ background: i % 2 === 0 ? "#fceea3" : "#f4a742" }}
-              >
+              <tr key={f.id_eleccion ?? i} style={{ background: i % 2 === 0 ? "#fceea3" : "#f4a742" }}>
                 <td style={td}>{f.orden}</td>
                 <td style={td}>{(f.nombre || "").toUpperCase()}</td>
                 <td style={td}>{f.dni}</td>
@@ -179,6 +262,26 @@ const TablaEleccion = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Modal de confirmación (solo se abre si isAdmin y apretó el botón) */}
+      <ModalConfirmarEliminar
+        open={openDel}
+        onClose={() => setOpenDel(false)}
+        onConfirm={confirmarEliminar}
+        loading={delLoading}
+        error={delError}
+      />
+
+      {/* Toast */}
+      {toast && (
+        <Toast
+          key={toast.id}
+          tipo={toast.tipo}
+          mensaje={toast.mensaje}
+          duracion={toast.duracion}
+          onClose={() => handleToastClose(toast.id)}
+        />
+      )}
     </div>
   );
 };

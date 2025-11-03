@@ -7,11 +7,11 @@ import {
   faIdCard,
   faLayerGroup,
   faSignOutAlt,
-  faUserPlus, // ✅ NUEVO ícono para "Registro"
+  faUserPlus,
 } from "@fortawesome/free-solid-svg-icons";
 import "./principal.css";
 import "../Global/roots.css";
-import logoRH from "../../imagenes/Escudo.png"; // ✅
+import logoRH from "../../imagenes/Escudo.png";
 
 /* =========== Modal cierre de sesión ============= */
 const ConfirmLogoutModal = ({ open, onClose, onConfirm }) => {
@@ -95,15 +95,21 @@ const Principal = () => {
   const role = (usuario?.rol || "").toLowerCase();
   const isAdmin = role === "admin";
 
-  // ✅ Agregamos "Registro" con ícono faUserPlus y ruta /registro
-  const menuItems = [
+  // Menú completo para ADMIN
+  const menuAdmin = [
     { icon: faLayerGroup, text: "Elección de Especialidad", ruta: "/eleccion-especialidad" },
     { icon: faUsers,      text: "Cupos",                   ruta: "/cupos" },
     { icon: faIdCard,     text: "Tabla Elección",          ruta: "/tabla-eleccion" },
-    { icon: faUserPlus,   text: "Registro",                ruta: "/registro" }, // ✅ NUEVA CAJA
+    { icon: faUserPlus,   text: "Registro",                ruta: "/registro" },
   ];
 
-  const visibleItems = isAdmin ? menuItems : menuItems;
+  // Menú restringido para VISTA (solo Tabla Elección)
+  const menuVista = [
+    { icon: faIdCard, text: "Tabla Elección", ruta: "/tabla-eleccion" },
+  ];
+
+  // Items visibles según rol
+  const visibleItems = isAdmin ? menuAdmin : menuVista;
 
   const handleItemClick = (item) => {
     navigate(item.ruta);
@@ -129,7 +135,9 @@ const Principal = () => {
             <h1 className="title">
               Sistema de <span className="title-accent">Elección de Especialidad IPET 50</span>
             </h1>
-            <p className="subtitle">{isAdmin ? "Panel de elección de especialidad" : "Panel"}</p>
+            <p className="subtitle">
+              {isAdmin ? "Panel de elección de especialidad" : "Vista de tabla de elección"}
+            </p>
           </div>
           <div className="logo-container logo-container--right">
             <img src={logoRH} alt="Logo IPET 50" className="logo" />

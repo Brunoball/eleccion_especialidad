@@ -4,28 +4,37 @@ header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Headers: Content-Type, Authorization');
 header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(204);
     exit;
 }
 
-require_once(__DIR__ . '/../../config/db.php'); // Debe definir $pdo (PDO conectado)
+require_once __DIR__ . '/../../config/db.php'; // Debe definir $pdo (PDO conectado)
 
-// 🔧 Ajustá el esquema si tu conexión no lo agrega por defecto
-define('T_USUARIOS', 'eleccion_especialidad.usuarios');
-define('T_ROL',      'eleccion_especialidad.rol');
+// ✅ SOLO nombres de tabla (sin prefijo de base/esquema)
+define('T_USUARIOS', '`usuarios`');
+define('T_ROL',      '`rol`');
 
 try {
-    $raw  = file_get_contents("php://input");
+    if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        http_response_code(405);
+        echo json_encode(['exito' => false, 'mensaje' => 'Método no permitido.']);
+        exit;
+    }
+
+    // Acepta JSON o x-www-form-urlencoded
+    $raw  = file_get_contents('php://input');
     $data = json_decode($raw, true);
     if (!is_array($data)) {
         $data = $_POST ?? [];
     }
 
-    $nombre     = isset($data['nombre']) ? trim((string)$data['nombre']) : '';
-    $contrasena = isset($data['contrasena']) ? (string)$data['contrasena'] : '';
-    $rolInput   = isset($data['rol']) ? trim((string)$data['rol']) : ''; // "admin"/"vista" o 1/2
+    // El front puede enviar "nombre"/"usuario" y "contrasena"/"password"
+    $nombre     = trim((string)($data['nombre'] ?? $data['usuario'] ?? ''));
+    $contrasena = (string)($data['contrasena'] ?? $data['password'] ?? '');
+    $rolInput   = trim((string)($data['rol'] ?? ''));
 
     // Validaciones básicas
     if ($nombre === '' || $contrasena === '' || $rolInput === '') {
@@ -43,9 +52,10 @@ try {
 
     // Normaliza rol: acepta "admin"/"vista" (cualquier case) o id numérico
     $idRol = null;
+    $rolNombre = null;
+
     if (ctype_digit($rolInput)) {
         $idRol = (int)$rolInput;
-        // Validar que exista
         $stmt = $pdo->prepare("SELECT rol FROM " . T_ROL . " WHERE id_rol = :id LIMIT 1");
         $stmt->execute([':id' => $idRol]);
         $filaRol = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -55,11 +65,10 @@ try {
         }
         $rolNombre = strtolower($filaRol['rol']);
     } else {
-        // Busca por nombre de rol (ADMIN/VISTA)
         $stmt = $pdo->prepare("
             SELECT id_rol, rol 
-            FROM " . T_ROL . " 
-            WHERE UPPER(rol) = UPPER(:rol) 
+            FROM " . T_ROL . "
+            WHERE UPPER(rol) = UPPER(:rol)
             LIMIT 1
         ");
         $stmt->execute([':rol' => $rolInput]);
@@ -72,9 +81,8 @@ try {
         $rolNombre = strtolower($filaRol['rol']);
     }
 
-    // Verifica existencia de usuario (case-insensitive)
-    $sqlExiste = "SELECT COUNT(*) FROM " . T_USUARIOS . " WHERE UPPER(usuario) = UPPER(:u)";
-    $stmt = $pdo->prepare($sqlExiste);
+    // Verifica existencia del usuario (case-insensitive)
+    $stmt = $pdo->prepare("SELECT COUNT(*) FROM " . T_USUARIOS . " WHERE UPPER(usuario) = UPPER(:u)");
     $stmt->execute([':u' => $nombre]);
     if ((int)$stmt->fetchColumn() > 0) {
         echo json_encode(['exito' => false, 'mensaje' => 'El usuario ya existe.']);
@@ -85,15 +93,14 @@ try {
     $hash = password_hash($contrasena, PASSWORD_BCRYPT);
 
     // Inserta usuario
-    $sqlInsert = "
+    $stmt = $pdo->prepare("
         INSERT INTO " . T_USUARIOS . " (usuario, contrasena, id_rol)
         VALUES (:usuario, :contrasena, :id_rol)
-    ";
-    $stmt = $pdo->prepare($sqlInsert);
+    ");
     $ok = $stmt->execute([
         ':usuario'    => $nombre,
-        ':contrasena' => $hash,     // guardamos hash
-        ':id_rol'     => $idRol
+        ':contrasena' => $hash,
+        ':id_rol'     => $idRol,
     ]);
 
     if (!$ok) {
@@ -116,7 +123,7 @@ try {
     http_response_code(500);
     echo json_encode([
         'exito'   => false,
-        'mensaje' => 'Error del servidor.',
-        'detalle' => $e->getMessage()
+        'mensaje' => 'Error del servidor.'
+        // 'detalle' => $e->getMessage(), // descomentar solo para depurar
     ], JSON_UNESCAPED_UNICODE);
 }

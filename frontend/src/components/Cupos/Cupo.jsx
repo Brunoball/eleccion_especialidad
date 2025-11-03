@@ -1,7 +1,8 @@
 // src/components/Cupos/Cupo.jsx
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BASE_URL from '../../config/config';
+import Toast from '../Global/Toast';
 import './Cupo.css';
 
 // Arma la URL final como en tu otro sistema:
@@ -14,6 +15,34 @@ const Cupo = () => {
   const [error, setError] = useState('');
   const [guardando, setGuardando] = useState(false);
   const [edits, setEdits] = useState({});
+
+  // ======= TOAST ROBUSTO =======
+  const [toast, setToast] = useState(null); // {tipo, mensaje, duracion, id}
+  const toastCtrl = useRef({ timer: null });
+
+  const clearToastTimer = () => {
+    if (toastCtrl.current.timer) {
+      clearTimeout(toastCtrl.current.timer);
+      toastCtrl.current.timer = null;
+    }
+  };
+  const showToast = (tipo, mensaje, duracion = 2800) => {
+    clearToastTimer();
+    setToast(null);
+    setTimeout(() => {
+      const id = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      setToast({ tipo, mensaje, duracion, id });
+      toastCtrl.current.timer = setTimeout(() => {
+        setToast((t) => (t && t.id === id ? null : t));
+        toastCtrl.current.timer = null;
+      }, Math.max(800, duracion + 100));
+    }, 0);
+  };
+  const handleToastClose = (id) => {
+    clearToastTimer();
+    setToast((t) => (t && t.id === id ? null : t));
+  };
+  useEffect(() => () => clearToastTimer(), []);
 
   const fetchJSON = async (url, opts = {}) => {
     const res = await fetch(url, {
@@ -77,7 +106,10 @@ const Cupo = () => {
       const esp = especialidades.find((x) => x.id === id);
       if (!esp) return;
       const cupo = valorEditado(id, esp.cupo);
-      if (cupo === '' || cupo < 0) return alert('Ingresá un cupo válido (≥ 0).');
+      if (cupo === '' || cupo < 0) {
+        showToast('advertencia', 'Ingresá un cupo válido (≥ 0).');
+        return;
+      }
 
       setGuardando(true);
       await fetchJSON(`${API}?action=editar_cupos`, {
@@ -88,10 +120,10 @@ const Cupo = () => {
         prev.map((e) => (e.id === id ? { ...e, cupo: Number(cupo) } : e))
       );
       setEdits(({ [id]: _omit, ...rest }) => rest);
-      alert('Cupo actualizado');
+      showToast('exito', `Cupo de "${esp.nombre}" actualizado.`);
     } catch (e) {
       console.error(e);
-      alert(e.message || 'Error al guardar');
+      showToast('error', e.message || 'Error al guardar el cupo');
     } finally {
       setGuardando(false);
     }
@@ -102,17 +134,21 @@ const Cupo = () => {
       .map((e) => {
         const nuevo = Object.prototype.hasOwnProperty.call(edits, e.id) ? edits[e.id] : undefined;
         if (nuevo === undefined || String(nuevo) === String(e.cupo ?? 0)) return null;
-        return { id: e.id, cupo: Number(nuevo) };
+        return { id: e.id, cupo: Number(nuevo), nombre: e.nombre };
       })
       .filter(Boolean);
 
-    if (payload.length === 0) return alert('No hay cambios para guardar.');
+    if (payload.length === 0) {
+      showToast('advertencia', 'No hay cambios para guardar.');
+      return;
+    }
 
     try {
       setGuardando(true);
+      // Al backend no le interesa el nombre; lo dejamos por si querés loguearlo arriba
       await fetchJSON(`${API}?action=editar_cupos`, {
         method: 'POST',
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload.map(({ id, cupo }) => ({ id, cupo }))),
       });
       setEspecialidades((prev) =>
         prev.map((e) => {
@@ -120,11 +156,11 @@ const Cupo = () => {
           return item ? { ...e, cupo: item.cupo } : e;
         })
       );
-      setEdits({ });
-      alert('Cupos actualizados');
+      setEdits({});
+      showToast('exito', `Cupos actualizados (${payload.length} especialidad/es).`);
     } catch (e) {
       console.error(e);
-      alert(e.message || 'Error al guardar los cupos');
+      showToast('error', e.message || 'Error al guardar los cupos');
     } finally {
       setGuardando(false);
     }
@@ -181,6 +217,17 @@ const Cupo = () => {
           );
         })}
       </div>
+
+      {/* Toast único y robusto */}
+      {toast && (
+        <Toast
+          key={toast.id}
+          tipo={toast.tipo}
+          mensaje={toast.mensaje}
+          duracion={toast.duracion}
+          onClose={() => handleToastClose(toast.id)}
+        />
+      )}
     </div>
   );
 };

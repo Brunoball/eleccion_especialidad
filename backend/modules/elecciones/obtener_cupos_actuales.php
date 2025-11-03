@@ -1,40 +1,42 @@
 <?php
 // backend/modules/elecciones/obtener_cupos_actuales.php
-// (si lo tenés en backend/modules/cupos/obtener_cupos_actuales.php, pegalo ahí mismo)
+// (si preferís, podés ubicarlo en backend/modules/cupos/obtener_cupos_actuales.php)
 
 declare(strict_types=1);
 
 header('Content-Type: application/json; charset=utf-8');
-require_once __DIR__ . '/../../config/db.php';
+
+require_once __DIR__ . '/../../config/db.php'; // debe definir $pdo (PDO)
 
 try {
     if (!isset($pdo) || !($pdo instanceof PDO)) {
-        throw new Exception('Sin conexión PDO');
+        throw new RuntimeException('Sin conexión PDO');
     }
 
-    // ✅ Tomar directamente la columna cupos_actuales de la tabla especialidad
+    // ✅ SIN prefijo de base/esquema: usa solo nombres de tabla
     $sql = "
         SELECT 
             e.id_especialidad,
             e.especialidad,
             e.cupo,
             e.cupos_actuales
-        FROM eleccion_especialidad.especialidad e
+        FROM `especialidad` e
         ORDER BY e.id_especialidad
     ";
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute();
-    $especialidades = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $especialidades = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
     echo json_encode([
-        'exito' => true,
+        'exito'          => true,
         'especialidades' => $especialidades
     ], JSON_UNESCAPED_UNICODE);
 
 } catch (Throwable $e) {
+    http_response_code(500);
     echo json_encode([
-        'exito' => false,
+        'exito'   => false,
         'mensaje' => 'Error al obtener cupos: ' . $e->getMessage()
     ], JSON_UNESCAPED_UNICODE);
 }

@@ -15,9 +15,9 @@ require_once __DIR__ . '/../../config/db.php'; // Debe definir $pdo (PDO conecta
 
 define('DEBUG_LOGIN', false);
 
-// 🔧 Ajustá el esquema si tu conexión no lo agrega por defecto
-define('T_USUARIOS', 'eleccion_especialidad.usuarios');
-define('T_ROL',      'eleccion_especialidad.rol');
+// ✅ SOLO nombres de tabla (sin prefijo de base de datos)
+define('T_USUARIOS', '`usuarios`');
+define('T_ROL',      '`rol`');
 
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -33,16 +33,17 @@ try {
         $data = $_POST ?? [];
     }
 
-    $nombre     = isset($data['nombre']) ? trim((string)$data['nombre']) : '';
-    $contrasena = isset($data['contrasena']) ? (string)$data['contrasena'] : '';
+    // Front puede enviar "nombre" o "usuario"
+    $nombre     = trim((string)($data['nombre'] ?? $data['usuario'] ?? ''));
+    $contrasena = (string)($data['contrasena'] ?? $data['password'] ?? '');
 
-    // ➤ Mantiene 200 para errores de credenciales (no 401) para consola limpia
+    // Mantiene 200 para errores de credenciales
     if ($nombre === '' || $contrasena === '') {
         echo json_encode(['exito' => false, 'mensaje' => 'Faltan datos.']);
         exit;
     }
 
-    // Busca por usuario y trae el nombre del rol
+    // Busca por usuario y trae el nombre del rol (sin schema)
     $sql = "
         SELECT u.id_usuario, u.usuario, u.contrasena, u.id_rol, r.rol AS rol_nombre
         FROM " . T_USUARIOS . " u
@@ -63,10 +64,10 @@ try {
     $guardado = (string)($u['contrasena'] ?? '');
     $ok = false;
     if ($guardado !== '') {
-        // Si es un hash válido (bcrypt/argon), password_verify lo detecta solo
+        // Si es bcrypt/argon, password_verify lo maneja
         $ok = password_verify($contrasena, $guardado);
         if (!$ok) {
-            // Fallback para bases viejas con texto plano
+            // Fallback para DB con texto plano (p.ej. "1")
             $ok = hash_equals($guardado, $contrasena);
         }
     }
@@ -82,7 +83,7 @@ try {
         'exito'   => true,
         'usuario' => [
             'idUsuario'       => (int)$u['id_usuario'],
-            'Nombre_Completo' => (string)$u['usuario'], // compatibilidad con el front
+            'Nombre_Completo' => (string)$u['usuario'], // compat con front
             'rol'             => $rolNombre
         ],
     ], JSON_UNESCAPED_UNICODE);

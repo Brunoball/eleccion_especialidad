@@ -77,10 +77,18 @@ try {
     case 'obtener_cupos_actuales':  // ← NUEVA RUTA
       require_once __DIR__ . '/../modules/elecciones/obtener_cupos_actuales.php';
       exit;
+      
+    case 'reset_elecciones':
+      require_once __DIR__ . '/../modules/elecciones/resetear_elecciones.php';
+      break;
 
     case 'obtener_elecciones':
       require_once __DIR__ . '/../modules/tabla_eleccion/obtener_elecciones.php';
       exit;
+
+    case 'reset_elecciones':
+      require_once __DIR__ . '/../modules/tabla_eleccion/resetear_elecciones.php';
+      break;
 
 
     // ✅ IMPORTAR ALUMNOS DESDE JSON (dos aliases)

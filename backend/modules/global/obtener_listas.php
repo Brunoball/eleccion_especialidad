@@ -18,16 +18,17 @@ try {
     if (!($pdo instanceof PDO)) {
         throw new RuntimeException('Conexión PDO no disponible.');
     }
+
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     $pdo->exec("SET NAMES utf8mb4");
 
-    // ✅ ÚNICA LISTA: ESPECIALIDAD
+    // ✅ SIN prefijo de base: solo nombres de tabla
     $sql = "
         SELECT 
             id_especialidad AS id,
             especialidad    AS nombre,
             cupo
-        FROM eleccion_especialidad.especialidad
+        FROM `especialidad`
         ORDER BY nombre
     ";
 
@@ -36,7 +37,7 @@ try {
         $especialidad[] = [
             'id'     => (int)$row['id'],
             'nombre' => (string)$row['nombre'],
-            // Permití null o número (por si algún registro no tiene cupo)
+            // cupo puede ser NULL o número
             'cupo'   => is_null($row['cupo']) ? null : (int)$row['cupo'],
         ];
     }
