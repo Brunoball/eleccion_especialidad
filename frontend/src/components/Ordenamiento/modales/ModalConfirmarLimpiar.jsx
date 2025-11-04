@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
 
-const ModalConfirmarEliminar = ({ open, onClose, onConfirm, loading, error }) => {
+const ModalConfirmarLimpiar = ({ open, onClose, onConfirm, loading, error }) => {
   const cancelBtnRef = useRef(null);
 
   useEffect(() => {
@@ -40,16 +40,20 @@ const ModalConfirmarEliminar = ({ open, onClose, onConfirm, loading, error }) =>
         }}
       >
         <h2 style={{ marginTop: 0, color: "#b42318" }}>
-          Confirmar eliminación masiva
+          Confirmar limpieza de datos
         </h2>
+
         <p style={{ lineHeight: 1.45 }}>
-          Vas a <strong>eliminar TODOS los registros</strong> de la tabla
-          <code> eleccion</code> y, además, se <strong>reiniciarán</strong> los{" "}
+          Esta acción <strong>eliminará TODOS los registros</strong> de{" "}
+          <code>eleccion</code>
+          {/* si tu endpoint también borra alumnos, deja este bloque visible */}
+          {" "}y de <code>alumnos</code>,{" "}
+          además <strong>reiniciará</strong> los{" "}
           <code>cupos_actuales</code> de cada especialidad al valor de{" "}
           <code>cupo</code>.
         </p>
         <p style={{ marginTop: 8 }}>
-          Esta acción es <strong>irreversible</strong>. ¿Deseás continuar?
+          La acción es <strong>irreversible</strong>. ¿Deseás continuar?
         </p>
 
         {error ? (
@@ -94,11 +98,11 @@ const ModalConfirmarEliminar = ({ open, onClose, onConfirm, loading, error }) =>
               background: "#d92d20",
               color: "#fff",
               cursor: "pointer",
-              fontWeight: 700,
+              fontWeight: 800,
               opacity: loading ? 0.7 : 1,
             }}
           >
-            {loading ? "Eliminando..." : "Sí, eliminar todo"}
+            {loading ? "Eliminando..." : "Sí, limpiar todo"}
           </button>
         </div>
       </div>
@@ -106,4 +110,4 @@ const ModalConfirmarEliminar = ({ open, onClose, onConfirm, loading, error }) =>
   );
 };
 
-export default ModalConfirmarEliminar;
+export default ModalConfirmarLimpiar;

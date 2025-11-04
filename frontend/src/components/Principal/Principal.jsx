@@ -4,10 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faUsers,
-  faIdCard,
   faLayerGroup,
   faSignOutAlt,
   faUserPlus,
+  faArrowDownAZ, // icono para "Cargar y ordenar"
 } from "@fortawesome/free-solid-svg-icons";
 import "./principal.css";
 import "../Global/roots.css";
@@ -99,13 +99,13 @@ const Principal = () => {
   const menuAdmin = [
     { icon: faLayerGroup, text: "Elección de Especialidad", ruta: "/eleccion-especialidad" },
     { icon: faUsers,      text: "Cupos",                   ruta: "/cupos" },
-    { icon: faIdCard,     text: "Tabla Elección",          ruta: "/tabla-eleccion" },
+    { icon: faArrowDownAZ,text: "Cargar y ordenar",        ruta: "/ordenar" }, // renombrado
     { icon: faUserPlus,   text: "Registro",                ruta: "/registro" },
   ];
 
-  // Menú restringido para VISTA (solo Tabla Elección)
+  // Menú para VISTA (antes era Tabla Elección, ahora solo “Cargar y ordenar”)
   const menuVista = [
-    { icon: faIdCard, text: "Tabla Elección", ruta: "/tabla-eleccion" },
+    { icon: faArrowDownAZ, text: "Cargar y ordenar", ruta: "/ordenar" },
   ];
 
   // Items visibles según rol
@@ -136,7 +136,7 @@ const Principal = () => {
               Sistema de <span className="title-accent">Elección de Especialidad IPET 50</span>
             </h1>
             <p className="subtitle">
-              {isAdmin ? "Panel de elección de especialidad" : "Vista de tabla de elección"}
+              {isAdmin ? "Panel de elección de especialidad" : "Gestión de carga y orden"}
             </p>
           </div>
           <div className="logo-container logo-container--right">

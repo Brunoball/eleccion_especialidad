@@ -2,7 +2,7 @@
 // backend/modules/tabla_eleccion/obtener_elecciones.php
 declare(strict_types=1);
 
-require_once __DIR__ . '/../../config/db.php';
+require_once __DIR__ . '/../../../config/db.php'; 
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');

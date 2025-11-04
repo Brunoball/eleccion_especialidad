@@ -54,47 +54,52 @@ try {
       exit;
 
     /* ===========================
-       ELECCIONES
+       ELECCIONES (pestañas)
     ============================ */
-    // 🔹 NUEVO: devuelve alumnos para la tabla
+    // 👉 Pestaña ELECCIÓN
     case 'obtener_alumnos':
-      require_once __DIR__ . '/../modules/elecciones/obtener_alumnos.php';
+      require_once __DIR__ . '/../modules/elecciones/pestana_eleccion/obtener_alumnos.php';
       exit;
 
-    // (Los que ya tenías)
     case 'eleccion_alumnos':
-      require_once __DIR__ . '/../modules/elecciones/alumnos_orden.php';
+      require_once __DIR__ . '/../modules/elecciones/pestana_eleccion/alumnos_orden.php';
       exit;
 
     case 'eleccion_confirmar':
-      require_once __DIR__ . '/../modules/elecciones/confirmar.php';
+      require_once __DIR__ . '/../modules/elecciones/pestana_eleccion/confirmar.php';
       exit;
 
     case 'eleccion_cancelar':
-      require_once __DIR__ . '/../modules/elecciones/cancelar.php';
+      require_once __DIR__ . '/../modules/elecciones/pestana_eleccion/cancelar.php';
       exit;
 
-    case 'obtener_cupos_actuales':  // ← NUEVA RUTA
-      require_once __DIR__ . '/../modules/elecciones/obtener_cupos_actuales.php';
+    case 'obtener_cupos_actuales':
+      require_once __DIR__ . '/../modules/elecciones/pestana_eleccion/obtener_cupos_actuales.php';
       exit;
-      
-    case 'reset_elecciones':
-      require_once __DIR__ . '/../modules/elecciones/resetear_elecciones.php';
-      break;
 
+    // 👉 Pestaña RESULTADOS
     case 'obtener_elecciones':
-      require_once __DIR__ . '/../modules/tabla_eleccion/obtener_elecciones.php';
+      require_once __DIR__ . '/../modules/elecciones/pestana_resultados/obtener_elecciones.php';
       exit;
 
-    case 'reset_elecciones':
-      require_once __DIR__ . '/../modules/tabla_eleccion/resetear_elecciones.php';
-      break;
-
-
-    // ✅ IMPORTAR ALUMNOS DESDE JSON (dos aliases)
+    /* ===========================
+       ORDENAR (import / ranking / reset / tabla)
+    ============================ */
     case 'alumnos_import_json':
     case 'importar_alumnos':
-      require_once __DIR__ . '/../modules/elecciones/alumnos_import_json.php';
+      require_once __DIR__ . '/../modules/ordenar/alumnos_import_json.php';
+      exit;
+
+    case 'ordenar_ranking':
+      require_once __DIR__ . '/../modules/ordenar/ordenar_ranking.php';
+      exit;
+
+    case 'reset_elecciones':
+      require_once __DIR__ . '/../modules/ordenar/resetear_elecciones.php';
+      exit;
+
+    case 'ordenar_obtener_tabla':
+      require_once __DIR__ . '/../modules/ordenar/obtener_tabla.php';
       exit;
 
     /* ===========================
@@ -102,10 +107,16 @@ try {
     ============================ */
     default:
       http_response_code(200);
-      echo json_encode(['exito' => false, 'mensaje' => 'Acción no válida: ' . $action]);
+      echo json_encode([
+        'exito'   => false,
+        'mensaje' => 'Acción no válida: ' . $action
+      ]);
       break;
   }
 } catch (Throwable $e) {
   http_response_code(200);
-  echo json_encode(['exito' => false, 'mensaje' => 'Error en router: ' . $e->getMessage() ]);
+  echo json_encode([
+    'exito'   => false,
+    'mensaje' => 'Error en router: ' . $e->getMessage()
+  ]);
 }

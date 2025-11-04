@@ -7,8 +7,8 @@ import Inicio from './components/Login/Inicio';
 import Principal from './components/Principal/Principal';
 import Registro from './components/Login/Registro';
 import Eleccion from './components/Elecciones/Eleccion';
-import Cupo from './components/Cupos/Cupo';                 // ✅ NUEVO
-import TablaEleccion from './components/Tabla_eleccion/TablaEleccion'; // ✅ si ya lo tenés
+import Cupo from './components/Cupos/Cupo';
+import Ordenar from './components/Ordenamiento/Ordenar'; // 👈 sigue disponible
 
 /* =========================================================
    🔒 Cierre de sesión por inactividad (SIN hooks del router)
@@ -61,7 +61,6 @@ function InactivityLogout() {
     window.addEventListener('storage', onStorage);
     window.addEventListener('popstate', onHistory);
 
-    // Interceptar pushState/replaceState sin usar el global "history"
     const browserHistory = window.history;
     const _push = browserHistory.pushState;
     const _replace = browserHistory.replaceState;
@@ -134,7 +133,7 @@ export default function App() {
           }
         />
 
-        {/* ✅ Cupos (protegido) */}
+        {/* Cupos (protegido) */}
         <Route
           path="/cupos"
           element={
@@ -144,12 +143,12 @@ export default function App() {
           }
         />
 
-        {/* ✅ Tabla Elección (protegido si lo usás) */}
+        {/* Ordenar (protegido) */}
         <Route
-          path="/tabla-eleccion"
+          path="/ordenar"
           element={
             <RutaProtegida>
-              <TablaEleccion />
+              <Ordenar />
             </RutaProtegida>
           }
         />
