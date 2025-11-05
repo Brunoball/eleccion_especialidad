@@ -99,7 +99,8 @@ try {
       exit;
 
     case 'ordenar_obtener_tabla':
-      require_once __DIR__ . '/../modules/ordenar/obtener_tabla.php';
+      // 👈 CORREGIDO: usa el archivo real
+      require_once __DIR__ . '/../modules/ordenar/ordenar_obtener_tabla.php';
       exit;
 
     /* ===========================

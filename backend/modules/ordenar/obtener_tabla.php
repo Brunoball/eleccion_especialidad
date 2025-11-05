@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../config/db.php';
 
-// ---- CORS y JSON ----
+// ---- CORS + JSON ----
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '*';
 header("Access-Control-Allow-Origin: $origin");
 header("Vary: Origin");
@@ -27,46 +27,37 @@ try {
   $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
   $pdo->exec("SET NAMES utf8mb4");
 
-  // Traer TODAS las columnas de la tabla alumnos
-  $sql = "
-    SELECT
-      id_alumno,
-      dni,
-      alumno,
-      promedio_1a,
-      coloquios_1a,
-      adeudadas_1et,
-      previas_1et,
-      repite_2a,
-      inasistencias_1et,
-      amonestaciones_1et,
-      observaciones_1et,
-      promedio_final,
-      fecha_referencia,
-      repite_1a,
-      amonestaciones_1a,
-      tercera_materia,
-      inasistencias_1a,
-      observaciones_1a,
-      promedio_1et
-    FROM alumnos
-    ORDER BY alumno ASC, id_alumno ASC
-  ";
+  // 1) Columnas REALES de la tabla en el orden correcto
+  $colsStmt = $pdo->query("SHOW COLUMNS FROM alumnos");
+  $colsRaw = $colsStmt->fetchAll(PDO::FETCH_ASSOC);
+  if (!$colsRaw) {
+    throw new RuntimeException("No se pudieron obtener las columnas de 'alumnos'.");
+  }
+  $columns = array_map(static fn($r) => $r['Field'], $colsRaw); // ['id_alumno','dni',...]
 
+  // 2) Filas tal cual (sin formateo, sin casts)
+  $sql = "
+    SELECT *
+    FROM alumnos
+    ORDER BY (orden IS NULL OR orden = 0) ASC, orden ASC, id_alumno ASC
+  ";
   $stmt = $pdo->query($sql);
   $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+  // 3) Respuesta
+  // JSON_PRESERVE_ZERO_FRACTION mantiene 0.00/7.50, etc.
   http_response_code(200);
   echo json_encode([
-    'exito'   => true,
-    'cantidad'=> count($rows),
-    'data'    => $rows
-  ], JSON_UNESCAPED_UNICODE);
+    'exito'    => true,
+    'columns'  => $columns,
+    'cantidad' => is_array($rows) ? count($rows) : 0,
+    'data'     => $rows,
+  ], JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION);
 
 } catch (Throwable $e) {
   http_response_code(200);
   echo json_encode([
     'exito'   => false,
-    'mensaje' => 'Error al obtener la tabla de alumnos: ' . $e->getMessage()
+    'mensaje' => 'Error al obtener la tabla de alumnos: ' . $e->getMessage(),
   ], JSON_UNESCAPED_UNICODE);
 }

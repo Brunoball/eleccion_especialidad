@@ -5,7 +5,7 @@ declare(strict_types=1);
 ini_set('display_errors','0');
 error_reporting(E_ALL);
 
-require_once __DIR__ . '/../../config/db.php'; // Debe exponer $pdo (PDO)
+require_once __DIR__ . '/../../config/db.php';
 header('Content-Type: application/json; charset=utf-8');
 
 if (!isset($pdo) || !($pdo instanceof PDO)) {
@@ -70,6 +70,19 @@ function toDateYMD($v): ?string {
   }
   return null;
 }
+/** 0 = con trayectoria, 1 = sin trayectoria */
+function toTrayectoria($v): int {
+  $s = mb_strtolower(trim((string)$v), 'UTF-8');
+  $con = ['si','sí','s','1','true','con','con trayectoria','posee','tiene'];
+  $sin = ['no','n','0','false','sin','sin trayectoria','no posee','no tiene'];
+  if (in_array($s, $con, true)) return 0;
+  if (in_array($s, $sin, true)) return 1;
+  if ($s !== '') {
+    $n = (int)preg_replace('/[^\d\-]/','',$s);
+    if ($n !== 0) return $n > 0 ? 1 : 0;
+  }
+  return 0;
+}
 
 /* ---------- Leer body ---------- */
 $raw = file_get_contents('php://input');
@@ -80,20 +93,20 @@ if (!is_array($rows) || !$rows) fail('Falta "rows" (array)', 400);
 
 /*
 Tabla: eleccion_especialidad.alumnos
-- Ahora: dni BIGINT UNSIGNED NULL UNIQUE (permite múltiples NULL).
-- Requisitos mínimos para importar: ALUMNO no vacío.
+- dni BIGINT UNSIGNED NULL UNIQUE (permite múltiples NULL).
+- Requisito: ALUMNO no vacío.
 */
 
 $sql = "INSERT INTO `".DB_SCHEMA."`.`alumnos`
   (dni, alumno,
    promedio_1a, coloquios_1a, repite_1a, inasistencias_1a, amonestaciones_1a, observaciones_1a,
    promedio_1et, adeudadas_1et, tercera_materia, previas_1et, repite_2a, inasistencias_1et, amonestaciones_1et, observaciones_1et,
-   promedio_final, fecha_referencia)
+   promedio_final, fecha_ingreso, trayectoria_institucional)
 VALUES
   (:dni, :alumno,
    :promedio_1a, :coloquios_1a, :repite_1a, :inasistencias_1a, :amonestaciones_1a, :observaciones_1a,
    :promedio_1et, :adeudadas_1et, :tercera_materia, :previas_1et, :repite_2a, :inasistencias_1et, :amonestaciones_1et, :observaciones_1et,
-   :promedio_final, :fecha_referencia)
+   :promedio_final, :fecha_ingreso, :trayectoria_institucional)
 ON DUPLICATE KEY UPDATE
   alumno = VALUES(alumno),
   promedio_1a = VALUES(promedio_1a),
@@ -111,7 +124,8 @@ ON DUPLICATE KEY UPDATE
   amonestaciones_1et = VALUES(amonestaciones_1et),
   observaciones_1et = VALUES(observaciones_1et),
   promedio_final = VALUES(promedio_final),
-  fecha_referencia = VALUES(fecha_referencia)";
+  fecha_ingreso = VALUES(fecha_ingreso),
+  trayectoria_institucional = VALUES(trayectoria_institucional)";
 
 $st = $pdo->prepare($sql);
 
@@ -125,7 +139,7 @@ try {
   $pdo->beginTransaction();
 
   foreach ($rows as $i => $r) {
-    // DNI: si viene vacío o "0", lo guardamos como NULL
+    // DNI: si viene vacío o "0", guardamos como NULL
     $dniRaw = preg_replace('/\D+/', '', (string)($r['dni'] ?? ''));
     $dni    = ($dniRaw === '' || $dniRaw === '0') ? null : $dniRaw;
 
@@ -138,32 +152,36 @@ try {
     }
 
     $params = [
-      ':dni'                => $dni, // NULL permitido
-      ':alumno'             => $alumno,
-      ':promedio_1a'        => toDecimal($r['promedio_1a'] ?? '', 2),
-      ':coloquios_1a'       => toUnsignedTiny($r['coloquios_1a'] ?? 0),
-      ':repite_1a'          => toEnumSiNo($r['repite_1a'] ?? 'no'),
-      ':inasistencias_1a'   => toDecimal($r['inasistencias_1a'] ?? 0, 1),
-      ':amonestaciones_1a'  => toUnsignedSmall($r['amonestaciones_1a'] ?? 0),
-      ':observaciones_1a'   => (string)($r['observaciones_1a'] ?? ''),
-      ':promedio_1et'       => toDecimal($r['promedio_1et'] ?? '', 2),
-      ':adeudadas_1et'      => toUnsignedSmall($r['adeudadas_1et'] ?? 0),
-      ':tercera_materia'    => toUnsignedTiny($r['tercera_materia'] ?? 0) ? 1 : 0,
-      ':previas_1et'        => toUnsignedSmall($r['previas_1et'] ?? 0),
-      ':repite_2a'          => toUnsignedTiny($r['repite_2a'] ?? 0) ? 1 : 0,
-      ':inasistencias_1et'  => toDecimal($r['inasistencias_1et'] ?? 0, 1),
-      ':amonestaciones_1et' => toUnsignedSmall($r['amonestaciones_1et'] ?? 0),
-      ':observaciones_1et'  => (string)($r['observaciones_1et'] ?? ''),
-      ':promedio_final'     => toDecimal($r['promedio_final'] ?? '', 2),
-      ':fecha_referencia'   => toDateYMD($r['fecha_referencia'] ?? null),
+      ':dni'                        => $dni,
+      ':alumno'                     => $alumno,
+
+      ':promedio_1a'                => toDecimal($r['promedio_1a'] ?? '', 2),
+      ':coloquios_1a'               => toUnsignedTiny($r['coloquios_1a'] ?? 0),
+      ':repite_1a'                  => toEnumSiNo($r['repite_1a'] ?? 'no'),
+      ':inasistencias_1a'           => toDecimal($r['inasistencias_1a'] ?? 0, 1),
+      ':amonestaciones_1a'          => toUnsignedSmall($r['amonestaciones_1a'] ?? 0),
+      ':observaciones_1a'           => (string)($r['observaciones_1a'] ?? ''),
+
+      ':promedio_1et'               => toDecimal($r['promedio_1et'] ?? '', 2),
+      ':adeudadas_1et'              => toUnsignedSmall($r['adeudadas_1et'] ?? 0),
+      ':tercera_materia'            => toUnsignedTiny($r['tercera_materia'] ?? 0) ? 1 : 0,
+      ':previas_1et'                => toUnsignedSmall($r['previas_1et'] ?? 0),
+      ':repite_2a'                  => toUnsignedTiny($r['repite_2a'] ?? 0) ? 1 : 0,
+      ':inasistencias_1et'          => toDecimal($r['inasistencias_1et'] ?? 0, 1),
+      ':amonestaciones_1et'         => toUnsignedSmall($r['amonestaciones_1et'] ?? 0),
+      ':observaciones_1et'          => (string)($r['observaciones_1et'] ?? ''),
+
+      ':promedio_final'             => toDecimal($r['promedio_final'] ?? '', 2),
+      ':fecha_ingreso'              => toDateYMD($r['fecha_ingreso'] ?? null),
+      ':trayectoria_institucional'  => toTrayectoria($r['trayectoria_institucional'] ?? 0),
     ];
 
     try {
       $st->execute($params);
       $rc = (int)$st->rowCount(); // 1 insert, 2 update, 0 sin cambios
-      if ($rc === 1) $insertados++;
+      if     ($rc === 1) $insertados++;
       elseif ($rc === 2) $actualizados++;
-      else $sinCambios++;
+      else               $sinCambios++;
     } catch (\PDOException $e) {
       if ((int)($e->errorInfo[1] ?? 0) === 1062) {
         $sinCambios++; // UNIQUE(dni) sin cambios
@@ -181,7 +199,7 @@ try {
   fail('Error en importación: '.$e->getMessage(), 500);
 }
 
-// Métrica extra para verificar realmente la escritura
+// Métrica de control
 try {
   $totalTabla = (int)$pdo->query("SELECT COUNT(*) FROM `".DB_SCHEMA."`.`alumnos`")->fetchColumn();
 } catch (\Throwable $e) {

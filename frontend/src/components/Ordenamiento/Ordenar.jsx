@@ -7,6 +7,8 @@ import BASE_URL from "../../config/config";
 import ModalImportar from "./modales/ModalImportar";
 import ModalOrdenar from "./modales/ModalOrdenar";
 import ModalConfirmarLimpiar from "./modales/ModalConfirmarLimpiar";
+import ModalCriterios from "./modales/ModalCriterios";
+import "./Ordenar.css";
 
 const API = `${BASE_URL.replace(/\/$/, "")}/api.php`;
 
@@ -15,18 +17,20 @@ export default function Ordenar() {
 
   // tabla + ordenamiento
   const [rows, setRows] = useState([]);
+  const [columns, setColumns] = useState([]); // ← VIENEN DEL BACKEND
   const [sort, setSort] = useState({ key: null, dir: "asc" });
 
   // modales
   const [openImport, setOpenImport] = useState(false);
   const [openOrdenar, setOpenOrdenar] = useState(false);
   const [openClear, setOpenClear] = useState(false);
+  const [openCriterios, setOpenCriterios] = useState(false);
 
-  // estado de limpieza
+  // limpieza
   const [clearLoading, setClearLoading] = useState(false);
   const [clearError, setClearError] = useState("");
 
-  // avisos simples
+  // avisos
   const [ok, setOk] = useState("");
   const [err, setErr] = useState("");
 
@@ -47,9 +51,15 @@ export default function Ordenar() {
       setErr("");
       const j = await fetchJSON(`${API}?action=ordenar_obtener_tabla`);
       const arr = Array.isArray(j?.data) ? j.data : [];
+      const cols = Array.isArray(j?.columns) && j.columns.length
+        ? j.columns
+        : // fallback por si el backend viejo no manda columns:
+          (arr[0] ? Object.keys(arr[0]) : []);
+      setColumns(cols);
       setRows(arr);
     } catch (e) {
       setErr(e.message || "No se pudo obtener la tabla de alumnos.");
+      setColumns([]);
       setRows([]);
     }
   };
@@ -58,20 +68,44 @@ export default function Ordenar() {
     cargarTabla();
   }, []);
 
-  const columns = useMemo(
-    () => (rows.length ? Object.keys(rows[0]) : []),
-    [rows]
-  );
+  // Etiquetas de cabecera: iguales al nombre real de la columna (sin adornos)
+  const columnLabels = useMemo(() => {
+    const o = {};
+    for (const c of columns) o[c] = c;
+    return o;
+  }, [columns]);
+
+  // Comparador para ordenar; NO altera cómo se muestra
+  const smartCompare = (aRaw, bRaw) => {
+    const A = aRaw ?? "";
+    const B = bRaw ?? "";
+
+    const aNum = Number(A);
+    const bNum = Number(B);
+    const aNumOk = A !== "" && Number.isFinite(aNum);
+    const bNumOk = B !== "" && Number.isFinite(bNum);
+    if (aNumOk && bNumOk) return aNum - bNum;
+
+    const aTime = Date.parse(String(A));
+    const bTime = Date.parse(String(B));
+    const aDateOk = !Number.isNaN(aTime);
+    const bDateOk = !Number.isNaN(bTime);
+    if (aDateOk && bDateOk) return aTime - bTime;
+
+    const aStr = String(A).toLowerCase();
+    const bStr = String(B).toLowerCase();
+    if (aStr < bStr) return -1;
+    if (aStr > bStr) return 1;
+    return 0;
+  };
 
   const sortedRows = useMemo(() => {
     if (!sort.key) return rows;
     const dir = sort.dir === "asc" ? 1 : -1;
+    const k = sort.key; // ← es exactamente la key real
     return [...rows].sort((a, b) => {
-      const A = (a?.[sort.key] ?? "").toString().toLowerCase();
-      const B = (b?.[sort.key] ?? "").toString().toLowerCase();
-      if (A < B) return -1 * dir;
-      if (A > B) return 1 * dir;
-      return 0;
+      const comp = smartCompare(a?.[k], b?.[k]);
+      return comp * dir;
     });
   }, [rows, sort]);
 
@@ -83,7 +117,10 @@ export default function Ordenar() {
     );
   };
 
-  // Confirmar limpieza total (eleccion + alumnos + reset cupos_actuales)
+  // Mostrar TAL CUAL llega (0 debe verse como "0")
+  const raw = (v) => (v === null || v === undefined ? "" : String(v));
+
+  // Limpiar todo
   const handleClearConfirm = async () => {
     try {
       setClearError("");
@@ -95,7 +132,7 @@ export default function Ordenar() {
       });
       setClearLoading(false);
       setOpenClear(false);
-      setRows([]); // vista local
+      setRows([]);
       setOk("Se limpiaron los datos y se reiniciaron los cupos.");
       setErr("");
     } catch (e) {
@@ -122,7 +159,7 @@ export default function Ordenar() {
           alignItems: "center",
           justifyContent: "space-between",
           gap: 12,
-          maxWidth: 1200,
+          maxWidth: 1400,
           margin: "0 auto",
           width: "100%",
         }}
@@ -135,9 +172,18 @@ export default function Ordenar() {
           ← Volver
         </button>
 
-        <h2 style={{ margin: 0, fontWeight: 700 }}>Ordenamiento</h2>
+        <h2 style={{ margin: 0, fontWeight: 700 }}>Ordenamiento - Tabla Alumnos</h2>
 
-        <div style={{ display: "flex", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
+          <button
+            onClick={() => setOpenCriterios(true)}
+            className="modalprincipal-btn modalprincipal-btn--solid"
+            style={{ padding: "10px 14px", background: "#6b7280", color: "#fff" }}
+            title="Ver criterios de ordenamiento"
+          >
+            Ver criterios
+          </button>
+
           <button
             onClick={() => setOpenImport(true)}
             className="modalprincipal-btn modalprincipal-btn--solid"
@@ -166,7 +212,7 @@ export default function Ordenar() {
       </header>
 
       {/* Mensajes */}
-      <div style={{ maxWidth: 1200, margin: "0 auto", width: "100%" }}>
+      <div style={{ maxWidth: 1400, margin: "0 auto", width: "100%" }}>
         {ok && (
           <div style={{
             padding: "10px 12px", borderRadius: 10, background: "#e7f8ec",
@@ -185,12 +231,12 @@ export default function Ordenar() {
         )}
       </div>
 
-      {/* Tabla centrada */}
+      {/* Tabla */}
       <main style={{ display: "grid", placeItems: "center", padding: 8 }}>
         <div
           style={{
             width: "100%",
-            maxWidth: 1200,
+            maxWidth: 1400,
             background: "#fff",
             border: "1px solid #e5e7eb",
             borderRadius: 12,
@@ -204,58 +250,81 @@ export default function Ordenar() {
               borderBottom: "1px solid #eee",
               fontSize: 14,
               color: "#6b7280",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
             }}
           >
-            {rows.length
-              ? `Registros: ${rows.length}`
-              : "Sin datos. Importá un CSV o XLSX para ver la tabla."}
+            <span>
+              {rows.length
+                ? `Registros: ${rows.length} • Columnas: ${columns.length}`
+                : "Sin datos. Importá un CSV o XLSX para ver la tabla."}
+            </span>
+            <span style={{ fontSize: 12 }}>
+              Desplazá horizontalmente para ver todas las columnas →
+            </span>
           </div>
 
           <div style={{ overflow: "auto", maxHeight: "70vh" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead style={{ position: "sticky", top: 0, background: "#fafafa", zIndex: 2 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "1200px" }}>
+              <thead style={{ position: "sticky", top: 0, background: "#f8fafc", zIndex: 2 }}>
                 <tr>
-                  {columns.length ? (
-                    columns.map((col) => (
-                      <th
-                        key={col}
-                        onClick={() => onHeaderClick(col)}
-                        style={{
-                          textAlign: "left",
-                          padding: "12px 14px",
-                          borderBottom: "1px solid #eee",
-                          cursor: "pointer",
-                          whiteSpace: "nowrap",
-                          userSelect: "none",
-                          fontWeight: 700,
-                        }}
-                        title="Ordenar"
-                      >
-                        {col}
-                        {sort.key === col ? (sort.dir === "asc" ? " ▲" : " ▼") : ""}
-                      </th>
-                    ))
-                  ) : (
+                  {columns.map((col) => (
                     <th
+                      key={col}
+                      onClick={() => onHeaderClick(col)}
                       style={{
                         textAlign: "left",
-                        padding: "12px 14px",
-                        borderBottom: "1px solid #eee",
-                        fontWeight: 700,
+                        padding: "12px 10px",
+                        borderBottom: "1px solid #e2e8f0",
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                        userSelect: "none",
+                        fontWeight: 600,
+                        fontSize: "13px",
+                        background: "#f1f5f9",
+                        borderRight: "1px solid #e2e8f0",
+                        minWidth: "120px",
                       }}
+                      title={`Ordenar por ${columnLabels[col] || col}`}
                     >
-                      (Esperando datos…)
+                      <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                        <span>{columnLabels[col] || col}</span>
+                        {sort.key === col && (
+                          <span style={{ fontSize: "10px" }}>
+                            {sort.dir === "asc" ? "▲" : "▼"}
+                          </span>
+                        )}
+                      </div>
                     </th>
-                  )}
+                  ))}
                 </tr>
               </thead>
 
               <tbody>
                 {sortedRows.map((row, idx) => (
-                  <tr key={idx} style={{ borderBottom: "1px solid #f1f1f1" }}>
-                    {columns.map((c) => (
-                      <td key={c} style={{ padding: "10px 14px", fontSize: 14 }}>
-                        {String(row?.[c] ?? "")}
+                  <tr
+                    key={idx}
+                    style={{
+                      borderBottom: "1px solid #f1f5f9",
+                      backgroundColor: idx % 2 === 0 ? "#ffffff" : "#f8fafc"
+                    }}
+                  >
+                    {columns.map((col) => (
+                      <td
+                        key={col}
+                        style={{
+                          padding: "10px 10px",
+                          fontSize: "13px",
+                          borderRight: "1px solid #f1f5f9",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          maxWidth: "200px"
+                        }}
+                        title={raw(row?.[col])}
+                      >
+                        {raw(row?.[col])}
                       </td>
                     ))}
                   </tr>
@@ -263,8 +332,17 @@ export default function Ordenar() {
 
                 {!rows.length && (
                   <tr>
-                    <td style={{ padding: 18, color: "#6b7280", fontSize: 14 }}>
-                      Importá un archivo para comenzar.
+                    <td
+                      colSpan={columns.length || 1}
+                      style={{
+                        padding: 40,
+                        color: "#64748b",
+                        fontSize: 14,
+                        textAlign: "center",
+                        fontStyle: "italic"
+                      }}
+                    >
+                      No hay datos disponibles. Importá un archivo CSV o XLSX para comenzar.
                     </td>
                   </tr>
                 )}
@@ -275,7 +353,7 @@ export default function Ordenar() {
       </main>
 
       <footer style={{ textAlign: "center", color: "#9ca3af", fontSize: 12 }}>
-        Ordenamiento • IPET 50
+        Ordenamiento • IPET 50 • {columns.length} columnas mostradas
       </footer>
 
       {/* === Modales === */}
@@ -286,7 +364,7 @@ export default function Ordenar() {
           onDone={(msg) => {
             setOk(msg || "Importación completa.");
             setErr("");
-            cargarTabla(); // ← refrescar
+            cargarTabla();
           }}
           onError={(message) => {
             setErr(message || "No se pudo importar.");
@@ -301,7 +379,7 @@ export default function Ordenar() {
         onApplied={() => {
           setOk("Ranking aplicado correctamente.");
           setErr("");
-          cargarTabla(); // ← refrescar
+          cargarTabla();
         }}
       />
 
@@ -310,10 +388,15 @@ export default function Ordenar() {
         onClose={() => setOpenClear(false)}
         onConfirm={async () => {
           await handleClearConfirm();
-          cargarTabla(); // ← refrescar
+          cargarTabla();
         }}
         loading={clearLoading}
         error={clearError}
+      />
+
+      <ModalCriterios
+        open={openCriterios}
+        onClose={() => setOpenCriterios(false)}
       />
     </div>
   );

@@ -66,7 +66,8 @@ const ModalOrdenar = ({ open, onClose, onApplied }) => {
                   <th>Rep. 2°</th>
                   <th>Rep. 1°</th>
                   <th>Inasist. 1° Etapa</th>
-                  <th>Amon. 1° Etapa</th>
+                  <th>Amon. 1° Año</th>
+                  <th>Obs. 1° Año</th>
                 </tr>
               </thead>
               <tbody>
@@ -82,11 +83,12 @@ const ModalOrdenar = ({ open, onClose, onApplied }) => {
                     <td>{Number(r.repite_2a) ? "Sí" : "No"}</td>
                     <td>{String(r.repite_1a ?? "").toLowerCase() === "si" ? "Sí" : "No"}</td>
                     <td>{Number(r.inasistencias_1et ?? 0).toFixed(1)}</td>
-                    <td>{r.amonestaciones_1et}</td>
+                    <td>{r.amonestaciones_1a}</td>
+                    <td>{(r.observaciones_1a ?? "").trim() ? "Sí" : "No"}</td>
                   </tr>
                 ))}
                 {preview.length === 0 && (
-                  <tr><td colSpan={11} className="empty">Sin datos para mostrar.</td></tr>
+                  <tr><td colSpan={12} className="empty">Sin datos para mostrar.</td></tr>
                 )}
               </tbody>
             </table>

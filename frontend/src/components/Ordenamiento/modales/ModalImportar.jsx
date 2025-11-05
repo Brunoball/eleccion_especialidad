@@ -5,12 +5,14 @@ import React, { useMemo, useState } from "react";
 const EXPECTED = [
   "dni",
   "alumno",
+
   "promedio_1a",
   "coloquios_1a",
   "repite_1a",
   "inasistencias_1a",
   "amonestaciones_1a",
   "observaciones_1a",
+
   "promedio_1et",
   "adeudadas_1et",
   "tercera_materia",
@@ -19,8 +21,10 @@ const EXPECTED = [
   "inasistencias_1et",
   "amonestaciones_1et",
   "observaciones_1et",
+
   "promedio_final",
-  "fecha_referencia",
+  "fecha_ingreso",              // << reemplaza a fecha_referencia
+  "trayectoria_institucional",  // << nueva columna
 ];
 
 /** Nombre “bonito” tal como aparece en el Excel (para UI) */
@@ -45,7 +49,8 @@ const DISPLAY_HEADERS = {
   observaciones_1et: "Observaciones 1° Etapa 2025",
 
   promedio_final: "Promedio Final",
-  fecha_referencia: "Fecha",
+  fecha_ingreso: "Fecha de Ingreso",
+  trayectoria_institucional: "Trayectoria Institucional",
 };
 
 /** Alias para mapear cabeceras del Excel a las claves EXPECTED */
@@ -53,27 +58,71 @@ const HEADER_ALIASES = {
   dni: ["dni", "documento", "nro dni", "n° dni", "nro documento", "document number"],
   alumno: ["alumno", "apellido y nombre", "nombre y apellido", "estudiante", "apellidos y nombres"],
 
-  promedio_1a: ["promedio 1° año", "promedio 1 año", "promedio 1er año", "prom 1° año", "promedio primero"],
-  coloquios_1a: ["materias a coloquio 1° año", "coloquios 1° año", "materias coloquio 1a"],
+  promedio_1a: [
+    "promedio 1° año", "promedio 1 año", "promedio 1er año", "prom 1° año",
+    "promedio primero", "promedio 1°\naño", "promedio 1 º año"
+  ],
+  coloquios_1a: [
+    "materias a coloquio 1° año", "coloquios 1° año", "materias coloquio 1a",
+    "materias a coloquio 1°\naño"
+  ],
   repite_1a: ["repitente 1° año", "repite 1° año", "repitente 1er año", "repite 1a"],
-  inasistencias_1a: ["faltas injustificadas 1° año", "faltas 1° año", "inasistencias 1° año"],
+  inasistencias_1a: [
+    "faltas injustificadas 1° año", "faltas 1° año", "inasistencias 1° año",
+    "faltas injustificadas 1°\naño"
+  ],
   amonestaciones_1a: ["amonestaciones 1° año", "amonest 1° año", "sanciones 1° año"],
-  observaciones_1a: ["observaciones 1° año", "obs 1° año", "comentarios 1° año"],
+  observaciones_1a: [
+    "observaciones 1° año","obs 1° año","comentarios 1° año",
+    "observaciones primer año","observaciones 1a","observaciones 1°\naño"
+  ],
 
-  promedio_1et: ["promedio 1° etapa 2025", "promedio 1 etapa 2025", "prom 1et 2025"],
-  adeudadas_1et: ["materias adeudadas 1° etapa 2025", "adeudadas 1° etapa 2025", "adeudadas 1et"],
+  promedio_1et: [
+    "promedio 1° etapa 2025","promedio 1 etapa 2025","prom 1et 2025","promedio 1 et 2025",
+    "promedio 1° etapa\n2025"
+  ],
+  adeudadas_1et: [
+    "materias adeudadas 1° etapa 2025","adeudadas 1° etapa 2025","adeudadas 1et",
+    "materias adeudadas 1° etapa\n2025"
+  ],
   tercera_materia: ["tercera materia", "3ra materia", "tercer materia"],
-  previas_1et: ["previas 1° etapa 2025", "previas 1 etapa 2025", "previas 1et"],
+  previas_1et: ["previas 1° etapa 2025", "previas 1 etapa 2025", "previas 1et", "previas 1° etapa\n2025"],
   repite_2a: ["repitente 2° año", "repite 2° año", "repitente 2do año", "repite 2a"],
-  inasistencias_1et: ["faltas injustificadas 1° etapa 2025", "faltas 1° etapa", "inasistencias 1et"],
+  inasistencias_1et: [
+    "faltas injustificadas 1° etapa 2025","faltas 1° etapa","inasistencias 1et",
+    "faltas injustificadas 1° etapa\n2025"
+  ],
   amonestaciones_1et: ["amonestaciones 1° etapa 2025", "amonest 1° etapa", "sanciones 1et"],
-  observaciones_1et: ["observaciones 1° etapa 2025", "obs 1° etapa 2025", "comentarios 1et"],
+  observaciones_1et: [
+    "observaciones 1° etapa 2025","obs 1° etapa 2025","comentarios 1et","observaciones 1 etapa 2025",
+    "observaciones 1° etapa\n2025"
+  ],
 
   promedio_final: ["promedio final", "prom final", "promedio definitivo"],
-  fecha_referencia: ["fecha", "fecha referencia", "actualizado", "fecha carga"],
+
+  // Nuevos
+  fecha_ingreso: [
+    "fecha de ingreso","fecha ingreso","fecha","fecha referencia","fecha carga"
+  ],
+  trayectoria_institucional: [
+    "trayectoria institucional","trayectoria","t_institucional",
+    "trayectoria institucuinal","trayectoria inst"
+  ],
 };
 
-/** Helpers de normalización (front) */
+/* ===== Normalizadores ===== */
+function stripDiacritics(s) {
+  return s.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+function normHeader(s) {
+  // minusculas, sin acentos, saltos de linea -> espacio, colapso espacios, borrar signos raros
+  return stripDiacritics(String(s ?? ""))
+    .toLowerCase()
+    .replace(/\r?\n+/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/[“”"’']/g, "'")
+    .trim();
+}
 function toEnumSiNo(val) {
   const s = String(val ?? "").trim().toLowerCase();
   return s === "si" || s === "sí" || s === "s" || s === "1" || s === "true" ? "si" : "no";
@@ -97,8 +146,7 @@ function toDec(val, decimals = 2) {
   return n.toFixed(decimals);
 }
 function toDateYMD(v) {
-  if (v === null || v === undefined) return "";
-  // Excel serial (1900-based)
+  if (v === null || v === undefined || v === "") return "";
   if (typeof v === "number" && Number.isFinite(v)) {
     const d = new Date(Math.round((v - 25569) * 86400 * 1000));
     if (Number.isNaN(d.getTime())) return "";
@@ -114,18 +162,29 @@ function toDateYMD(v) {
   if (m2) return `${m2[1]}-${m2[2]}-${m2[3]}`;
   return "";
 }
+/** Trayectoria: 0 = con trayectoria, 1 = sin trayectoria */
+function toTrayectoria(val) {
+  const sRaw = String(val ?? "").trim();
+  const s = sRaw.toLowerCase();
+  const con = ["si","sí","s","1","true","con","con trayectoria","posee","tiene"];
+  const sin = ["no","n","0","false","sin","sin trayectoria","no posee","no tiene"];
+  if (con.includes(s)) return 0;
+  if (sin.includes(s)) return 1;
+  const n = Number(s.replace(/[^\d-]/g, ""));
+  if (!Number.isNaN(n)) return n > 0 ? 1 : 0;
+  return 0;
+}
 
 /** --------- Utilidades de parsing XLSX/CSV --------- **/
 function normalizeHeadersToIndices(headers, aliasesMap) {
-  // Devuelve un mapa EXPECTED -> índice en headers (o -1 si no está)
-  const lc = (s) => s.toString().trim().toLowerCase();
-  const lowerH = headers.map(lc);
+  // Normalizamos *todo* para evitar problemas de saltos de línea, acentos, espacios, etc.
+  const lowerH = headers.map(normHeader);
   const idx = {};
   for (const key of EXPECTED) {
-    const tries = [key, ...(aliasesMap[key] || [])].map(lc);
+    const candidates = [key, ...(aliasesMap[key] || [])].map(normHeader);
     let found = -1;
-    for (const t of tries) {
-      const p = lowerH.indexOf(t);
+    for (const c of candidates) {
+      const p = lowerH.indexOf(c);
       if (p !== -1) { found = p; break; }
     }
     idx[key] = found;
@@ -134,7 +193,6 @@ function normalizeHeadersToIndices(headers, aliasesMap) {
 }
 
 function buildRowsFromObjects(h, objects, idxMap) {
-  // `objects` es array de objetos (sheet_to_json normal)
   return objects.map((row) => {
     const out = {};
     for (const key of EXPECTED) {
@@ -143,7 +201,7 @@ function buildRowsFromObjects(h, objects, idxMap) {
       const originalKey = h[i];
       out[key] = row[originalKey] ?? "";
     }
-    // Limpieza
+    // Limpieza tipada
     out.dni = String(out.dni ?? "").replace(/\D+/g, "");
     out.alumno = String(out.alumno ?? "").trim();
 
@@ -163,18 +221,17 @@ function buildRowsFromObjects(h, objects, idxMap) {
     out.amonestaciones_1et = toSmall(out.amonestaciones_1et);
     out.observaciones_1et  = String(out.observaciones_1et ?? "").trim();
 
-    out.promedio_final   = toDec(out.promedio_final, 2);
-    out.fecha_referencia = toDateYMD(out.fecha_referencia);
+    out.promedio_final            = toDec(out.promedio_final, 2);
+    out.fecha_ingreso             = toDateYMD(out.fecha_ingreso);
+    out.trayectoria_institucional = toTrayectoria(out.trayectoria_institucional);
+
     return out;
   }).filter((o) => o.alumno || o.dni);
 }
 
 function buildRowsFromMatrix(matrix, headerRowIndex, aliasesMap) {
-  // `matrix` es array de arrays (header:1)
   const headers = (matrix[headerRowIndex] || []).map((v) => String(v ?? "").trim());
   const idxMap = normalizeHeadersToIndices(headers, aliasesMap);
-
-  // Filas de datos = desde la siguiente a la de encabezados
   const dataRows = matrix.slice(headerRowIndex + 1);
   const objects = dataRows.map((arr) => {
     const obj = {};
@@ -185,15 +242,14 @@ function buildRowsFromMatrix(matrix, headerRowIndex, aliasesMap) {
 }
 
 function autoDetectHeaderRow(matrix, aliasesMap) {
-  // Busca en las primeras ~15 filas una que contenga varios alias “reconocibles”
   const maxScan = Math.min(matrix.length, 15);
   const scoreRow = (row) => {
-    const cells = row.map((c) => String(c ?? "").toLowerCase().trim());
+    const cells = row.map((c) => normHeader(c));
     let score = 0;
     for (const key of EXPECTED) {
-      const candidates = [key, ...(aliasesMap[key] || [])];
+      const candidates = [key, ...(aliasesMap[key] || [])].map(normHeader);
       for (const cand of candidates) {
-        if (cells.includes(cand.toLowerCase())) { score++; break; }
+        if (cells.includes(cand)) { score++; break; }
       }
     }
     return score;
@@ -203,7 +259,7 @@ function autoDetectHeaderRow(matrix, aliasesMap) {
     const sc = scoreRow(matrix[i] || []);
     if (sc > bestScore) { bestScore = sc; bestIdx = i; }
   }
-  return bestScore >= 2 ? bestIdx : -1; // al menos 2 coincidencias
+  return bestScore >= 2 ? bestIdx : -1;
 }
 
 /** -------------------- Componente -------------------- **/
@@ -214,9 +270,8 @@ const ModalImportar = ({ onClose, onDone, onError, uploadUrl }) => {
   const [uploading, setUploading] = useState(false);
   const [uploadPct, setUploadPct] = useState(0);
   const [parsing, setParsing] = useState(false);
-  const [diag, setDiag] = useState(""); // diagnóstico visible
+  const [diag, setDiag] = useState("");
 
-  // Lista de nombres de ejemplo para mostrar en la UI (siempre en orden EXPECTED)
   const displaySample = useMemo(
     () => EXPECTED.map((k) => DISPLAY_HEADERS[k]).join(", "),
     []
@@ -250,7 +305,6 @@ const ModalImportar = ({ onClose, onDone, onError, uploadUrl }) => {
   const onDragOver = (e) => e.preventDefault();
 
   async function getXLSX() {
-    // Import dinámico (funciona en ESM)
     const mod = await import(/* webpackChunkName: "xlsx" */ "xlsx");
     return mod;
   }
@@ -280,10 +334,9 @@ const ModalImportar = ({ onClose, onDone, onError, uploadUrl }) => {
         return;
       }
       const buf = await f.arrayBuffer();
-      const wb = XLSX.read(buf, { type: "array" });
-
-      // 1) Elegir hoja “FINAL” o la primera
-      const finalSheetName = wb.SheetNames.find((n) => String(n).toLowerCase().includes("final")) || wb.SheetNames[0];
+      const wb = XLSX.read(buf, { type: "array", cellDates: true });
+      const finalSheetName =
+        wb.SheetNames.find((n) => String(n).toLowerCase().includes("final")) || wb.SheetNames[0];
       const ws = wb.Sheets[finalSheetName];
       if (!ws) {
         setParsing(false);
@@ -291,8 +344,8 @@ const ModalImportar = ({ onClose, onDone, onError, uploadUrl }) => {
         return;
       }
 
-      // 2) Intento 1: como objetos (cabeceras desde la fila “visible”)
-      let json = XLSX.utils.sheet_to_json(ws, { defval: "" }); // array de objetos
+      // Intento 1: como objetos
+      let json = XLSX.utils.sheet_to_json(ws, { defval: "" });
       if (json && json.length) {
         const h = Object.keys(json[0] || {});
         if (h.length) {
@@ -308,7 +361,7 @@ const ModalImportar = ({ onClose, onDone, onError, uploadUrl }) => {
         }
       }
 
-      // 3) Intento 2 (fallback): como matriz (header:1) y detección automática de fila de encabezados
+      // Intento 2: como matriz + detección automática de fila de encabezados
       const matrix = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
       if (!Array.isArray(matrix) || matrix.length === 0) {
         setParsing(false);
@@ -357,14 +410,10 @@ const ModalImportar = ({ onClose, onDone, onError, uploadUrl }) => {
     for (let i = 0; i < line.length; i++) {
       const ch = line[i];
       if (ch === '"') {
-        if (inQ && line[i + 1] === '"') {
-          cur += '"'; i++;
-        } else {
-          inQ = !inQ;
-        }
+        if (inQ && line[i + 1] === '"') { cur += '"'; i++; }
+        else { inQ = !inQ; }
       } else if (ch === sep && !inQ) {
-        out.push(cur);
-        cur = "";
+        out.push(cur); cur = "";
       } else {
         cur += ch;
       }
@@ -376,10 +425,7 @@ const ModalImportar = ({ onClose, onDone, onError, uploadUrl }) => {
   const canUpload = useMemo(() => rows.length > 0, [rows]);
 
   const subir = async () => {
-    if (!rows.length) {
-      setDiag("No hay filas para importar. Verificá el archivo y los encabezados.");
-      return;
-    }
+    if (!rows.length) { setDiag("No hay filas para importar. Verificá el archivo y los encabezados."); return; }
     try {
       setUploading(true);
       setUploadPct(0);
@@ -405,11 +451,7 @@ const ModalImportar = ({ onClose, onDone, onError, uploadUrl }) => {
           throw new Error(`Respuesta no válida del servidor (HTTP ${res.status}).`);
         }
 
-        const okShape =
-          js?.exito === true ||
-          typeof js?.insertados !== "undefined" ||
-          typeof js?.data !== "undefined";
-
+        const okShape = js?.exito === true || typeof js?.insertados !== "undefined" || typeof js?.data !== "undefined";
         if (!res.ok || !okShape) {
           const msg = js?.mensaje || `Respuesta inesperada del servidor (HTTP ${res.status}).`;
           throw new Error(msg);
@@ -447,7 +489,6 @@ const ModalImportar = ({ onClose, onDone, onError, uploadUrl }) => {
       <div style={modal} onClick={(e) => e.stopPropagation()}>
         <h2 style={{ marginTop: 0 }}>Importar alumnos</h2>
 
-        {/* Explicación usando exactamente los nombres como en el Excel */}
         <p style={{ marginTop: 6, color: "#555" }}>
           Subí un <b>.xlsx</b> (hoja <b>FINAL</b>) o un <b>.csv</b> con estas cabeceras:
           <br />
@@ -455,20 +496,13 @@ const ModalImportar = ({ onClose, onDone, onError, uploadUrl }) => {
         </p>
 
         <div onDrop={onDrop} onDragOver={onDragOver} style={dropzone}>
-          <input
-            id="file-import-eleccion"
-            type="file"
-            accept=".xlsx,.csv"
-            onChange={onPick}
-            style={{ display: "none" }}
-            disabled={uploading}
-          />
+          <input id="file-import-eleccion" type="file" accept=".xlsx,.csv" onChange={onPick} style={{ display: "none" }} disabled={uploading} />
           <label htmlFor="file-import-eleccion" style={{ cursor: uploading ? "not-allowed" : "pointer" }}>
             {file ? <div><b>Seleccionado:</b> {file.name}</div> : <div>Arrastrá aquí o <u>hacé click</u> para elegir</div>}
           </label>
           {uploading && (
             <div style={{ marginTop: 10, fontSize: 13 }}>
-              Importando… {uploadPct}%{/* progreso simple */}
+              Importando… {uploadPct}%
             </div>
           )}
         </div>
@@ -479,21 +513,18 @@ const ModalImportar = ({ onClose, onDone, onError, uploadUrl }) => {
               {parsing ? "Leyendo archivo…" : `Vista previa (${rows.length} filas)`}
             </div>
 
-            {/* Diagnóstico */}
             {diag && (
               <div style={{ padding: 10, borderRadius: 8, background: "#fff3f3", color: "#a33", marginBottom: 10, fontSize: 13 }}>
                 {diag}
               </div>
             )}
 
-            {/* Encabezados detectados (tal cual vienen del archivo) */}
             {!parsing && headers.length > 0 && (
               <div style={{ fontSize: 12, color: "#666", marginBottom: 6 }}>
                 <b>Encabezados detectados:</b> {headers.join(" | ")}
               </div>
             )}
 
-            {/* Tabla preview con encabezados “bonitos” (DISPLAY_HEADERS) */}
             {!parsing && rows.length > 0 && (
               <div style={{ maxHeight: 320, overflow: "auto", border: "1px solid #eee", borderRadius: 8 }}>
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 14 }}>
@@ -526,16 +557,9 @@ const ModalImportar = ({ onClose, onDone, onError, uploadUrl }) => {
         )}
 
         <div style={{ display: "flex", gap: 10, marginTop: 16, justifyContent: "flex-end" }}>
-          <button type="button" onClick={onClose} style={btn("neutral")} disabled={uploading}>
-            Cerrar
-          </button>
-          <button
-            type="button"
-            onClick={subir}
-            style={btn("accent")}
-            disabled={!canUpload || uploading}
-            title={!canUpload ? "Elegí un archivo" : "Importar al servidor"}
-          >
+          <button type="button" onClick={onClose} style={btn("neutral")} disabled={uploading}>Cerrar</button>
+          <button type="button" onClick={subir} style={btn("accent")} disabled={!canUpload || uploading}
+            title={!canUpload ? "Elegí un archivo" : "Importar al servidor"}>
             {uploading ? "Importando…" : "Importar"}
           </button>
         </div>
@@ -549,58 +573,11 @@ const ModalImportar = ({ onClose, onDone, onError, uploadUrl }) => {
 };
 
 /* ───────── estilos inline ───────── */
-const backdrop = {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(0,0,0,0.35)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  padding: 16,
-  zIndex: 1000,
-};
-const modal = {
-  width: "100%",
-  maxWidth: 900,
-  background: "#fff",
-  borderRadius: 12,
-  padding: 16,
-  boxShadow: "0 8px 30px rgba(0,0,0,0.2)",
-};
-const dropzone = {
-  marginTop: 8,
-  border: "2px dashed #d7872f",
-  background: "#fff7e7",
-  borderRadius: 12,
-  padding: 24,
-  textAlign: "center",
-  fontWeight: 600,
-};
-const th = {
-  textAlign: "left",
-  padding: "8px 10px",
-  borderBottom: "1px solid " + "#eee",
-  position: "sticky",
-  top: 0,
-};
-const td = {
-  padding: "8px 10px",
-  borderBottom: "1px solid #f3e2cc",
-  whiteSpace: "nowrap",
-  textOverflow: "ellipsis",
-  overflow: "hidden",
-};
-const btn = (variant) => {
-  const base = {
-    padding: "10px 18px",
-    borderRadius: 10,
-    fontWeight: 700,
-    border: "none",
-    boxShadow: "0 2px 6px rgba(0,0,0,0.2)",
-    cursor: "pointer",
-  };
-  if (variant === "accent") return { ...base, background: "#d7872f", color: "#fff" };
-  return { ...base, background: "#cfcfcf", color: "#222" };
-};
+const backdrop = { position: "fixed", inset: 0, background: "rgba(0,0,0,0.35)", display: "flex", alignItems: "center", justifyContent: "center", padding: 16, zIndex: 1000 };
+const modal = { width: "100%", maxWidth: 900, background: "#fff", borderRadius: 12, padding: 16, boxShadow: "0 8px 30px rgba(0,0,0,0.2)" };
+const dropzone = { marginTop: 8, border: "2px dashed #d7872f", background: "#fff7e7", borderRadius: 12, padding: 24, textAlign: "center", fontWeight: 600 };
+const th = { textAlign: "left", padding: "8px 10px", borderBottom: "1px solid #eee", position: "sticky", top: 0 };
+const td = { padding: "8px 10px", borderBottom: "1px solid #f3e2cc", whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" };
+const btn = (variant) => { const base = { padding: "10px 18px", borderRadius: 10, fontWeight: 700, border: "none", boxShadow: "0 2px 6px rgba(0,0,0,0.2)", cursor: "pointer" }; return variant === "accent" ? { ...base, background: "#d7872f", color: "#fff" } : { ...base, background: "#cfcfcf", color: "#222" }; };
 
 export default ModalImportar;
