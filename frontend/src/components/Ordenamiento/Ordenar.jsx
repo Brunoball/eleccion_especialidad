@@ -10,6 +10,9 @@ import ModalConfirmarLimpiar from "./modales/ModalConfirmarLimpiar";
 import ModalCriterios from "./modales/ModalCriterios";
 import "./Ordenar.css";
 
+// >>> NUEVO: criterios compartidos
+import { CRITERIA_COLORS, resolverCriterio } from "./criterios";
+
 const API = `${BASE_URL.replace(/\/$/, "")}/api.php`;
 
 export default function Ordenar() {
@@ -17,7 +20,7 @@ export default function Ordenar() {
 
   // tabla + ordenamiento
   const [rows, setRows] = useState([]);
-  const [columns, setColumns] = useState([]); // ← VIENEN DEL BACKEND
+  const [columns, setColumns] = useState([]);
   const [sort, setSort] = useState({ key: null, dir: "asc" });
 
   // modales
@@ -53,29 +56,27 @@ export default function Ordenar() {
       const arr = Array.isArray(j?.data) ? j.data : [];
       const cols = Array.isArray(j?.columns) && j.columns.length
         ? j.columns
-        : // fallback por si el backend viejo no manda columns:
-          (arr[0] ? Object.keys(arr[0]) : []);
+        : (arr[0] ? Object.keys(arr[0]) : []);
       setColumns(cols);
       setRows(arr);
     } catch (e) {
+      console.error("Error cargando tabla:", e);
       setErr(e.message || "No se pudo obtener la tabla de alumnos.");
       setColumns([]);
       setRows([]);
     }
   };
 
-  useEffect(() => {
-    cargarTabla();
-  }, []);
+  useEffect(() => { cargarTabla(); }, []);
 
-  // Etiquetas de cabecera: iguales al nombre real de la columna (sin adornos)
+  // Etiquetas de cabecera
   const columnLabels = useMemo(() => {
     const o = {};
     for (const c of columns) o[c] = c;
     return o;
   }, [columns]);
 
-  // Comparador para ordenar; NO altera cómo se muestra
+  // Comparador para ordenar
   const smartCompare = (aRaw, bRaw) => {
     const A = aRaw ?? "";
     const B = bRaw ?? "";
@@ -102,7 +103,7 @@ export default function Ordenar() {
   const sortedRows = useMemo(() => {
     if (!sort.key) return rows;
     const dir = sort.dir === "asc" ? 1 : -1;
-    const k = sort.key; // ← es exactamente la key real
+    const k = sort.key;
     return [...rows].sort((a, b) => {
       const comp = smartCompare(a?.[k], b?.[k]);
       return comp * dir;
@@ -117,8 +118,90 @@ export default function Ordenar() {
     );
   };
 
-  // Mostrar TAL CUAL llega (0 debe verse como "0")
-  const raw = (v) => (v === null || v === undefined ? "" : String(v));
+  // Mostrar valores exactos - preservar "0", "1", etc.
+  const raw = (v) => {
+    if (v === null || v === undefined) return "";
+    if (v === "") return "";
+    return String(v);
+  };
+
+  // ====== EXPORTACIÓN ======
+  const downloadBlob = (blob, filename) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const toCSV = (headers, rowsAOA) => {
+    const esc = (s) => {
+      const str = String(s ?? "");
+      if (/[",\n;]/.test(str)) {
+        return `"${str.replace(/"/g, '""')}"`;
+      }
+      return str;
+    };
+    const lines = [headers.map(esc).join(",")];
+    for (let i = 1; i < rowsAOA.length; i++) {
+      lines.push(rowsAOA[i].map(esc).join(","));
+    }
+    return lines.join("\n");
+  };
+
+  const buildAOAFromView = () => {
+    const headers = columns.map((c) => columnLabels[c] || c);
+    const body = sortedRows.map((r) => columns.map((c) => raw(r?.[c])));
+    return [headers, ...body];
+  };
+
+  const autoColWidths = (aoa) => {
+    const colCount = aoa[0]?.length || 0;
+    const widths = Array(colCount).fill(10);
+    for (let c = 0; c < colCount; c++) {
+      let max = 10;
+      for (let r = 0; r < aoa.length; r++) {
+        const len = String(aoa[r][c] ?? "").length;
+        if (len > max) max = len;
+      }
+      widths[c] = { wch: Math.min(Math.max(max + 2, 10), 80) };
+    }
+    return widths;
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      if (!columns.length || !sortedRows.length) {
+        setErr("No hay datos para exportar.");
+        return;
+      }
+      const aoa = buildAOAFromView();
+      try {
+        const XLSX = (await import(/* webpackChunkName: "xlsx" */ "xlsx")).default || (await import("xlsx"));
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+        ws["!cols"] = autoColWidths(aoa);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Alumnos");
+        const out = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+        downloadBlob(new Blob([out], { type: "application/octet-stream" }), `alumnos_ordenamiento_${new Date().toISOString().slice(0,10)}.xlsx`);
+        setOk("Archivo Excel exportado correctamente.");
+        setErr("");
+        return;
+      } catch (e) {
+        console.warn("No se pudo exportar XLSX, se usa CSV. Detalle:", e);
+      }
+      const csv = toCSV(aoa[0], aoa);
+      downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), `alumnos_ordenamiento_${new Date().toISOString().slice(0,10)}.csv`);
+      setOk("Archivo CSV exportado correctamente (fallback).");
+      setErr("");
+    } catch (e) {
+      console.error(e);
+      setErr("No se pudo exportar el archivo.");
+    }
+  };
 
   // Limpiar todo
   const handleClearConfirm = async () => {
@@ -192,6 +275,7 @@ export default function Ordenar() {
           >
             Importar datos
           </button>
+
           <button
             onClick={() => setOpenOrdenar(true)}
             className="modalprincipal-btn modalprincipal-btn--solid"
@@ -200,6 +284,16 @@ export default function Ordenar() {
           >
             Ordenar Ranking
           </button>
+
+          <button
+            onClick={handleExportExcel}
+            className="modalprincipal-btn modalprincipal-btn--solid"
+            style={{ padding: "10px 14px", background: "#059669", color: "#fff" }}
+            title="Exportar lo visible a Excel"
+          >
+            Exportar Excel
+          </button>
+
           <button
             onClick={() => { setClearError(""); setOpenClear(true); }}
             className="modalprincipal-btn modalprincipal-btn--solid"
@@ -302,33 +396,38 @@ export default function Ordenar() {
               </thead>
 
               <tbody>
-                {sortedRows.map((row, idx) => (
-                  <tr
-                    key={idx}
-                    style={{
-                      borderBottom: "1px solid #f1f5f9",
-                      backgroundColor: idx % 2 === 0 ? "#ffffff" : "#f8fafc"
-                    }}
-                  >
-                    {columns.map((col) => (
-                      <td
-                        key={col}
-                        style={{
-                          padding: "10px 10px",
-                          fontSize: "13px",
-                          borderRight: "1px solid #f1f5f9",
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          maxWidth: "200px"
-                        }}
-                        title={raw(row?.[col])}
-                      >
-                        {raw(row?.[col])}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
+                {sortedRows.map((row, idx) => {
+                  const crit = resolverCriterio(row);
+                  return (
+                    <tr
+                      key={idx}
+                      title={`Criterio: ${crit.label} (#${crit.id})`}
+                      style={{
+                        borderBottom: "1px solid #f1f5f9",
+                        backgroundColor: crit.color,
+                        boxShadow: "inset 4px 0 0 rgba(0,0,0,.08)",
+                      }}
+                    >
+                      {columns.map((col) => (
+                        <td
+                          key={col}
+                          style={{
+                            padding: "10px 10px",
+                            fontSize: "13px",
+                            borderRight: "1px solid #f1f5f9",
+                            whiteSpace: "nowrap",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            maxWidth: "200px"
+                          }}
+                          title={raw(row?.[col])}
+                        >
+                          {raw(row?.[col])}
+                        </td>
+                      ))}
+                    </tr>
+                  );
+                })}
 
                 {!rows.length && (
                   <tr>

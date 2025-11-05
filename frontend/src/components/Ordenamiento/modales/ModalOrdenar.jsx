@@ -1,7 +1,14 @@
-// src/components/Ordenamiento/modales/ModalOrdenar.jsx
 import React, { useEffect, useState } from "react";
 import BASE_URL from "../../../config/config";
 import "./ModalOrdenar.css";
+
+// Convierte '0' / '' / 'no' -> 0 ; si es número en texto -> ese número
+const obsToNumber = (v) => {
+  const s = String(v ?? "").trim().toLowerCase();
+  if (s === "" || s === "no") return 0;
+  const n = Number(s);
+  return Number.isFinite(n) ? n : 0;
+};
 
 const ModalOrdenar = ({ open, onClose, onApplied }) => {
   const [loadingPrev, setLoadingPrev] = useState(false);
@@ -59,15 +66,19 @@ const ModalOrdenar = ({ open, onClose, onApplied }) => {
                   <th>#</th>
                   <th>Alumno</th>
                   <th>DNI</th>
-                  <th>Promedio Final</th>
-                  <th>Promedio 1° Etapa</th>
+                  <th>Trayectoria</th>
+                  <th>Prom. Final</th>
+                  <th>Prom. 1° Etapa</th>
                   <th>Adeud. 1° Etapa</th>
                   <th>Previas 1° Etapa</th>
                   <th>Rep. 2°</th>
                   <th>Rep. 1°</th>
                   <th>Inasist. 1° Etapa</th>
+                  <th>Inasist. 1° Año</th>
                   <th>Amon. 1° Año</th>
+                  <th>Amon. 1° Etapa</th>
                   <th>Obs. 1° Año</th>
+                  <th>Obs. 1° Etapa</th>
                 </tr>
               </thead>
               <tbody>
@@ -76,6 +87,7 @@ const ModalOrdenar = ({ open, onClose, onApplied }) => {
                     <td>{i + 1}</td>
                     <td>{r.alumno}</td>
                     <td>{r.dni}</td>
+                    <td>{Number(r.trayectoria_institucional) === 1 ? "Sin tray." : "Con tray."}</td>
                     <td>{Number(r.promedio_final ?? 0).toFixed(2)}</td>
                     <td>{Number(r.promedio_1et ?? 0).toFixed(2)}</td>
                     <td>{r.adeudadas_1et}</td>
@@ -83,12 +95,15 @@ const ModalOrdenar = ({ open, onClose, onApplied }) => {
                     <td>{Number(r.repite_2a) ? "Sí" : "No"}</td>
                     <td>{String(r.repite_1a ?? "").toLowerCase() === "si" ? "Sí" : "No"}</td>
                     <td>{Number(r.inasistencias_1et ?? 0).toFixed(1)}</td>
+                    <td>{Number(r.inasistencias_1a ?? 0).toFixed(1)}</td>
                     <td>{r.amonestaciones_1a}</td>
-                    <td>{(r.observaciones_1a ?? "").trim() ? "Sí" : "No"}</td>
+                    <td>{r.amonestaciones_1et ?? 0}</td>
+                    <td>{obsToNumber(r.observaciones_1a)}</td>
+                    <td>{obsToNumber(r.observaciones_1et)}</td>
                   </tr>
                 ))}
                 {preview.length === 0 && (
-                  <tr><td colSpan={12} className="empty">Sin datos para mostrar.</td></tr>
+                  <tr><td colSpan={16} className="empty">Sin datos para mostrar.</td></tr>
                 )}
               </tbody>
             </table>
