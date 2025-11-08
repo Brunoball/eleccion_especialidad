@@ -8,9 +8,12 @@ export default function ModalCriterios({ open, onClose }) {
 
   useEffect(() => {
     if (!open) return;
-    const onKeyDown = (e) => e.key === "Escape" && onClose && onClose();
+    const onKeyDown = (e) => {
+      if (e.key === "Escape" && onClose) onClose();
+    };
     document.addEventListener("keydown", onKeyDown);
     document.body.style.overflow = "hidden";
+
     return () => {
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = "";
@@ -19,36 +22,56 @@ export default function ModalCriterios({ open, onClose }) {
 
   if (!open) return null;
 
-  const onOverlayClick = (e) => {
-    if (e.target === overlayRef.current) onClose && onClose();
+  const handleOverlayClick = (e) => {
+    if (e.target === overlayRef.current && onClose) onClose();
   };
 
   return (
-    <div className="crit-overlay" ref={overlayRef} onMouseDown={onOverlayClick}>
-      <div className="crit-modal" role="dialog" aria-modal="true" aria-label="Criterios de ordenamiento">
+    <div
+      className="crit-overlay"
+      ref={overlayRef}
+      onMouseDown={handleOverlayClick}
+    >
+      <div
+        className="crit-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Criterios de ordenamiento"
+      >
         <div className="crit-header">
           <h3>CRITERIOS DE ORDENAMIENTO</h3>
-          <button className="crit-close" onClick={onClose} aria-label="Cerrar">✕</button>
+          <button
+            className="crit-close"
+            onClick={onClose}
+            aria-label="Cerrar"
+          >
+            ✕
+          </button>
         </div>
 
         <div className="crit-table-wrap">
-          <table className="crit-table">
-            <tbody>
-              {CRITERIA.map((label, i) => {
-                const id = i + 1;
-                return (
-                  <tr key={id} style={{ background: CRITERIA_COLORS[id] }}>
-                    <td className="num">{id}</td>
-                    <td className="label">{label}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+          <div className="crit-list">
+            {CRITERIA.map((label, i) => {
+              const id = i + 1;
+              const bg = CRITERIA_COLORS?.[id]; // mantiene los colores indicadores
+              return (
+                <div
+                  key={id}
+                  className={`crit-row row-${id}`}
+                  style={bg ? { background: bg } : {}}
+                >
+                  <div className="num">{id}</div>
+                  <div className="label">{label}</div>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         <div className="crit-footer">
-          <button className="crit-btn" onClick={onClose}>Entendido</button>
+          <button className="crit-btn" onClick={onClose}>
+            Entendido
+          </button>
         </div>
       </div>
     </div>

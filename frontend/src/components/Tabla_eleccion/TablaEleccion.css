@@ -1,0 +1,145 @@
+:root {
+  /* Paleta editable desde un solo lugar */
+  --bg: #fff8c6;
+  --card: #fff;
+  --primary: #e5891d;
+  --primary-700: #c26f16;
+  --primary-900: #8f520f;
+  --danger: #d92d20;
+  --danger-900: #a32017;
+  --muted: #fff3d2;
+  --border: #e4a74d;
+  --head: #d7872f;
+  --row-alt: #fceea3;
+  --row: #f4a742;
+  --text: #222;
+  --white: #fff;
+}
+
+.tabla-eleccion {
+  padding: 20px;
+  background: var(--bg);
+  min-height: 100vh;
+  color: var(--text);
+}
+
+.tabla-eleccion__title {
+  text-align: center;
+  margin: 0 0 20px;
+  font-weight: 800;
+}
+
+.tabla-eleccion__controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.tabla-eleccion__select {
+  padding: 10px 15px;
+  border-radius: 8px;
+  font-weight: 600;
+  background: var(--muted);
+  border: 1px solid var(--head);
+  min-width: 260px;
+  outline: none;
+}
+
+.tabla-eleccion__select:focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 30%, transparent);
+}
+
+.tabla-eleccion__btns {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  padding: 10px 20px;
+  color: var(--white);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  transition: transform 0.08s ease, filter 0.15s ease;
+  will-change: transform;
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn--export {
+  background: var(--primary);
+}
+.btn--export:hover {
+  filter: brightness(1.05);
+}
+
+.btn--delete {
+  background: var(--danger);
+  font-weight: 800;
+}
+.btn--delete:hover {
+  filter: brightness(1.05);
+}
+.btn--delete:active {
+  background: var(--danger-900);
+}
+
+.btn--back {
+  background: var(--primary-700);
+}
+.btn--back:hover {
+  filter: brightness(1.05);
+}
+.btn--back:active {
+  background: var(--primary-900);
+}
+
+.tabla-eleccion__table-wrap {
+  overflow-x: auto;
+}
+
+.tabla-eleccion__table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card);
+}
+
+.th {
+  padding: 12px 8px;
+  text-align: left;
+  font-weight: 700;
+  border-bottom: 2px solid var(--border);
+  background: var(--head);
+  color: var(--white);
+}
+
+.td {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--border);
+  font-weight: 600;
+}
+
+.tr--alt {
+  background: var(--row-alt);
+}
+
+.tabla-eleccion__table tbody tr:not(.tr--alt) {
+  background: var(--row);
+}
+
+/* Responsive tweaks */
+@media (max-width: 640px) {
+  .tabla-eleccion__select {
+    min-width: 100%;
+  }
+  .btn {
+    width: 100%;
+  }
+}

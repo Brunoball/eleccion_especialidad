@@ -521,6 +521,7 @@ body { margin: 0; }
 }
 
 .modalprincipal-text{
+  padding: 0 2rem;
   margin: 0 0 22px;
   color: var(--blue-inst-gray-700);
   font-size: 18px;

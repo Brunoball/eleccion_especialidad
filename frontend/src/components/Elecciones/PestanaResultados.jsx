@@ -1,34 +1,50 @@
+// frontend/src/components/Eleccion/PestanaResultados.jsx
 import React, { useCallback, useEffect, useState } from "react";
+import "./Eleccion.css";
 
 export default function PestanaResultados({ BASE_URL, fetchJSON, showToast }) {
   const [filas, setFilas] = useState([]);
   const [especialidades, setEspecialidades] = useState([]);
   const [filtro, setFiltro] = useState("todas");
+  const [loading, setLoading] = useState(true); // 👈 loading general de la tabla
 
   const fetchAll = useCallback(async () => {
     try {
-      const jElec = await fetchJSON(`${BASE_URL}/api.php?action=obtener_elecciones`);
+      setLoading(true); // 👈 arranca ocupando el alto fijo
+      const jElec = await fetchJSON(
+        `${BASE_URL}/api.php?action=obtener_elecciones`
+      );
       setFilas(jElec?.data || []);
 
-      const jList = await fetchJSON(`${BASE_URL}/api.php?action=obtener_listas`);
+      const jList = await fetchJSON(
+        `${BASE_URL}/api.php?action=obtener_listas`
+      );
+
       if (Array.isArray(jList?.especialidad)) {
         setEspecialidades(jList.especialidad);
       } else {
-        throw new Error(jList?.mensaje || "No se pudieron cargar las especialidades.");
+        throw new Error(
+          jList?.mensaje || "No se pudieron cargar las especialidades."
+        );
       }
     } catch (err) {
       console.error("Error al cargar datos:", err);
       showToast("error", err.message || "No se pudo cargar la tabla.");
+    } finally {
+      setLoading(false); // 👈 suelta cuando ya tengo datos (o error)
     }
   }, [BASE_URL, fetchJSON, showToast]);
 
-  useEffect(() => { fetchAll(); }, [fetchAll]);
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
 
   const visibles =
     filtro === "todas"
       ? filas
       : filas.filter(
-          (f) => (f.especialidad || "").toLowerCase() === filtro.toLowerCase()
+          (f) =>
+            (f.especialidad || "").toLowerCase() === filtro.toLowerCase()
         );
 
   const exportarExcel = () => {
@@ -42,9 +58,16 @@ export default function PestanaResultados({ BASE_URL, fetchJSON, showToast }) {
         f.dni || "",
         f.especialidad || "",
       ]);
+
       const csv =
-        "\uFEFF" + [header, ...rows].map((row) => row.map(quote).join(SEP)).join("\n");
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        "\uFEFF" +
+        [header, ...rows]
+          .map((row) => row.map(quote).join(SEP))
+          .join("\n");
+
+      const blob = new Blob([csv], {
+        type: "text/csv;charset=utf-8;",
+      });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -53,6 +76,7 @@ export default function PestanaResultados({ BASE_URL, fetchJSON, showToast }) {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
+
       showToast("exito", "Exportación generada correctamente.");
     } catch (e) {
       console.error(e);
@@ -60,42 +84,16 @@ export default function PestanaResultados({ BASE_URL, fetchJSON, showToast }) {
     }
   };
 
-  const th = {
-    padding: "12px 8px",
-    textAlign: "left",
-    fontWeight: 700,
-    borderBottom: "2px solid #e4a74d",
-  };
-  const td = {
-    padding: "10px 8px",
-    borderBottom: "1px solid #e4a74d",
-    fontWeight: 600,
-  };
+  const isEmpty = !loading && visibles.length === 0;
 
   return (
-    <div style={{ padding: 12, backgroundColor: "#fff8c6", borderRadius: 12 }}>
+    <div className="res-wrapper">
       {/* Filtros + Acciones */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 12,
-          gap: 12,
-          flexWrap: "wrap",
-        }}
-      >
+      <div className="res-toolbar">
         <select
           value={filtro}
           onChange={(e) => setFiltro(e.target.value)}
-          style={{
-            padding: "10px 15px",
-            borderRadius: 8,
-            fontWeight: 600,
-            background: "#fff3d2",
-            border: "1px solid #d7872f",
-            minWidth: 260,
-          }}
+          className="res-select"
         >
           <option value="todas">Todas las especialidades</option>
           {especialidades.map((esp) => (
@@ -105,46 +103,58 @@ export default function PestanaResultados({ BASE_URL, fetchJSON, showToast }) {
           ))}
         </select>
 
-        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button
-            onClick={exportarExcel}
-            style={{
-              padding: "10px 20px",
-              background: "#e5891d",
-              color: "#fff",
-              border: "none",
-              borderRadius: 8,
-              cursor: "pointer",
-              fontWeight: 700,
-            }}
-          >
+        <div className="res-actions">
+          <button onClick={exportarExcel} className="res-btn-export">
             Exportar a Excel
           </button>
         </div>
       </div>
 
-      {/* Tabla */}
-      <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", background: "#fff" }}>
-          <thead>
-            <tr style={{ background: "#d7872f", color: "#fff" }}>
-              <th style={th}>Orden</th>
-              <th style={th}>Alumno</th>
-              <th style={th}>DNI</th>
-              <th style={th}>Especialidad</th>
-            </tr>
-          </thead>
-          <tbody>
-            {visibles.map((f, i) => (
-              <tr key={f.id_eleccion ?? i} style={{ background: i % 2 === 0 ? "#fceea3" : "#f4a742" }}>
-                <td style={td}>{f.orden}</td>
-                <td style={td}>{(f.nombre || "").toUpperCase()}</td>
-                <td style={td}>{f.dni}</td>
-                <td style={td}>{f.especialidad}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* Tabla estilo grid con header fijo y cuerpo scrolleable */}
+      <div className="res-grid-wrapper">
+        {/* Encabezados */}
+        <div className="res-grid-row res-grid-header">
+          <div className="res-grid-cell">Orden</div>
+          <div className="res-grid-cell">Alumno</div>
+          <div className="res-grid-cell">DNI</div>
+          <div className="res-grid-cell">Especialidad</div>
+        </div>
+
+        {/* Cuerpo con alto fijo cuando carga / vacío */}
+        <div
+          className={
+            "res-grid-body" +
+            ((loading || isEmpty) ? " res-grid-body-fixed" : "")
+          }
+        >
+          {loading ? (
+            <div className="res-grid-row grid-row-full">
+              <div className="res-grid-cell cell-full">
+                Cargando resultados…
+              </div>
+            </div>
+          ) : isEmpty ? (
+            <div className="res-grid-row grid-row-full">
+              <div className="res-grid-cell cell-full">
+                No hay registros para mostrar.
+              </div>
+            </div>
+          ) : (
+            visibles.map((f, i) => (
+              <div
+                key={f.id_eleccion ?? `${f.dni}-${i}`}
+                className={`res-grid-row ${i % 2 === 0 ? "par" : "impar"}`}
+              >
+                <div className="res-grid-cell">{f.orden}</div>
+                <div className="res-grid-cell">
+                  {(f.nombre || "").toUpperCase()}
+                </div>
+                <div className="res-grid-cell">{f.dni}</div>
+                <div className="res-grid-cell">{f.especialidad}</div>
+              </div>
+            ))
+          )}
+        </div>
       </div>
     </div>
   );

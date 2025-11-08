@@ -1,32 +1,43 @@
-import React, { useEffect, useRef, useState } from "react";
+// frontend/src/components/Eleccion/PestanaEleccion.jsx
+import React, {
+  useEffect,
+  useState,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import ModalPantalla from "./modales/ModalPantalla";
 import "./Eleccion.css";
 
-export default function PestanaEleccion({ BASE_URL, fetchJSON, showToast }) {
+function PestanaEleccionInner({ BASE_URL, fetchJSON, showToast }, ref) {
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [especialidades, setEspecialidades] = useState([]);
   const [alumnos, setAlumnos] = useState([]);
   const [loadingAlumnos, setLoadingAlumnos] = useState(false);
-
   const [seleccion, setSeleccion] = useState({}); // { [id_alumno]: "id_especialidad" }
 
+  const [openPresent, setOpenPresent] = useState(false);
+  const [startIndex, setStartIndex] = useState(0);
+
   const esAusente = (nombre) =>
-    typeof nombre === "string" && nombre.trim().toUpperCase() === "AUSENTE";
+    typeof nombre === "string" &&
+    nombre.trim().toUpperCase() === "AUSENTE";
 
   const cargarCupos = async () => {
     try {
       const { especialidades: esp } = await fetchJSON(
         `${BASE_URL}/api.php?action=obtener_cupos_actuales`
       );
+
       const normalizado = (esp || []).map((e) => ({
         id: Number(e.id_especialidad),
         nombre: String(e.especialidad),
         cupo: e.cupo == null ? 0 : Number(e.cupo),
         cupos_actuales: Number(e.cupos_actuales || 0),
       }));
+
       setEspecialidades(normalizado);
     } catch (e) {
       console.error(e);
@@ -41,11 +52,13 @@ export default function PestanaEleccion({ BASE_URL, fetchJSON, showToast }) {
       const { alumnos: rows } = await fetchJSON(
         `${BASE_URL}/api.php?action=obtener_alumnos&order=alumno&dir=ASC&limit=10000`
       );
+
       const norm = (rows || []).map((r) => ({
         id_alumno: Number(r.id_alumno),
         dni: String(r.dni ?? ""),
         alumno: String(r.alumno ?? "").toUpperCase(),
-        promedio_final: r.promedio_final == null ? null : Number(r.promedio_final),
+        promedio_final:
+          r.promedio_final == null ? null : Number(r.promedio_final),
         previas_1et: Number(r.previas_1et ?? 0),
         adeudadas_1et: Number(r.adeudadas_1et ?? 0),
         coloquios_1a: Number(r.coloquios_1a ?? 0),
@@ -59,7 +72,8 @@ export default function PestanaEleccion({ BASE_URL, fetchJSON, showToast }) {
         observaciones_2a: r.observaciones_2a ?? null,
         sin_trayectoria: Number(r.sin_trayectoria ?? 0),
         tercera_materia: Number(r.tercera_materia ?? 0),
-        id_especialidad: r.id_especialidad === null ? null : Number(r.id_especialidad),
+        id_especialidad:
+          r.id_especialidad === null ? null : Number(r.id_especialidad),
         especialidad: r.especialidad ?? null,
         orden: r.orden == null ? null : Number(r.orden),
       }));
@@ -92,9 +106,11 @@ export default function PestanaEleccion({ BASE_URL, fetchJSON, showToast }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // value SIEMPRE string
   const onChangeSelect = (idAlumno, valueStr) => {
-    setSeleccion((prev) => ({ ...prev, [idAlumno]: String(valueStr || "") }));
+    setSeleccion((prev) => ({
+      ...prev,
+      [idAlumno]: String(valueStr || ""),
+    }));
   };
 
   const onConfirmar = async (row) => {
@@ -105,15 +121,24 @@ export default function PestanaEleccion({ BASE_URL, fetchJSON, showToast }) {
       const idEspecialidad = Number(selectedStr || 0);
 
       if (!idEspecialidad) {
-        showToast("advertencia", "Seleccioná una especialidad antes de confirmar.");
+        showToast(
+          "advertencia",
+          "Seleccioná una especialidad antes de confirmar."
+        );
         return;
       }
 
-      const espElegida = especialidades.find((esp) => esp.id === idEspecialidad);
+      const espElegida = especialidades.find(
+        (esp) => esp.id === idEspecialidad
+      );
+
       if (espElegida && !esAusente(espElegida.nombre)) {
         const disponibles = Number(espElegida.cupos_actuales || 0);
         if (disponibles <= 0) {
-          showToast("error", `No hay cupo disponible en ${espElegida.nombre}.`);
+          showToast(
+            "error",
+            `No hay cupo disponible en ${espElegida.nombre}.`
+          );
           return;
         }
       }
@@ -129,7 +154,9 @@ export default function PestanaEleccion({ BASE_URL, fetchJSON, showToast }) {
 
       showToast(
         "exito",
-        `Registrado: ${row.alumno} en ${espElegida?.nombre || "especialidad"}.`
+        `Registrado: ${row.alumno} en ${
+          espElegida?.nombre || "especialidad"
+        }.`
       );
       await cargarAlumnos();
       await cargarCupos();
@@ -146,6 +173,7 @@ export default function PestanaEleccion({ BASE_URL, fetchJSON, showToast }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id_alumno: row.id_alumno }),
       });
+
       showToast("exito", `Se canceló la inscripción de ${row.alumno}.`);
       await cargarAlumnos();
       await cargarCupos();
@@ -155,121 +183,174 @@ export default function PestanaEleccion({ BASE_URL, fetchJSON, showToast }) {
     }
   };
 
-  // ====== Modo Pantalla ======
-  const [openPresent, setOpenPresent] = useState(false);
-  const [startIndex, setStartIndex] = useState(0);
+  // ===== Modo Pantalla =====
   const abrirModoPantalla = (desde = 0) => {
     setStartIndex(desde);
     setOpenPresent(true);
   };
 
-  if (loading) {
-    return (
-      <div>
-        <p className="loading-text">Cargando…</p>
-      </div>
-    );
-  }
+  useImperativeHandle(ref, () => ({
+    abrirModoPantallaDesde: (indice = 0) => abrirModoPantalla(indice),
+    irDashboard: () => navigate("/panel"),
+  }));
+
+  // Flag para el estado de carga de la tabla (incluye el loading inicial)
+  const tablaLoading = loading || loadingAlumnos;
+
+  const materiasNormales = especialidades.filter((e) => !esAusente(e.nombre));
+  const ausenteObj = especialidades.find((e) => esAusente(e.nombre));
+  const ausenteCount = Number(ausenteObj?.cupos_actuales || 0);
 
   return (
     <>
-      {/* Tarjetas de CUPOS */}
-      <div className="cupos-grid">
-        {especialidades.map((e) => {
-          const disponibles = Number(e.cupos_actuales || 0);
-          const aus = esAusente(e.nombre);
-          const agotado = disponibles <= 0 && !aus;
+      {/* Mini grilla de materias */}
+      <h3 className="cupos-titulo" style={{ marginTop: 0 }}>
+        Materias
+      </h3>
 
+      <div className="materias-grid-6">
+        {materiasNormales.map((m) => {
+          const disp = Number(m.cupos_actuales || 0);
           return (
-            <div key={e.id} className={`cupo-card ${agotado ? "cupo-agotado" : ""}`}>
-              <div className="cupo-nombre">{e.nombre}</div>
-              <div className="cupo-disponibles">
-                <strong className={disponibles > 0 || aus ? "ok" : "no"}>
-                  Disponibles: {disponibles}
-                </strong>
+            <button
+              key={m.id}
+              type="button"
+              className="materia-card-mini"
+              title={m.nombre}
+            >
+              <div className="materia-title">{m.nombre}</div>
+              <div className="materia-meta">
+                <span className={`dot ${disp > 0 ? "ok" : "no"}`} />
+                <span className="count">
+                  Disponibles: <b>{disp}</b>
+                </span>
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
 
-      {/* Acciones arriba de la tabla */}
-      <div className="actions" style={{ marginTop: 12 }}>
-        <button
-          type="button"
-          onClick={() => abrirModoPantalla(0)}
-          className="btn btn-primary"
-          title="Mostrar 1 alumno por vez (Enter confirma, ← → navegan)"
+      {/* AUSENTE mini pill */}
+      <div className="ausente-row">
+        <div
+          className="ausente-pill"
+          title="Registro de AUSENTES (no consume cupo)"
         >
-          Modo Pantalla
-        </button>
-
-        <button type="button" onClick={() => navigate("/panel")} className="btn btn-neutral">
-          Volver al Dashboard
-        </button>
+          <span className="pill-label">AUSENTE</span>
+          <span className="pill-count">{ausenteCount}</span>
+        </div>
       </div>
 
-      {/* Tabla de alumnos */}
-      <div className="table-wrapper" style={{ marginTop: 12 }}>
-        <table className="tabla">
-          <thead>
-            <tr>
-              <th className="th-orden">Orden</th>
-              <th>Alumno</th>
-              <th className="th-esp">Especialidad</th>
-              <th className="th-acc">Acción</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loadingAlumnos ? (
-              <tr>
-                <td colSpan={4} className="td-loading">Cargando alumnos…</td>
-              </tr>
-            ) : alumnos.length === 0 ? (
-              <tr>
-                <td colSpan={4} className="td-loading">No hay alumnos cargados.</td>
-              </tr>
-            ) : (
-              alumnos.map((row, idx) => {
-                const inscripto = row.id_especialidad !== null;
+      {/* GRID de alumnos */}
+      <div className="grid-wrapper">
+        {/* Header fijo */}
+        <div className="grid-header grid-row">
+          <div className="cell col-orden">Orden</div>
+          <div className="cell col-alumno">Alumno</div>
+          <div className="cell col-insc">Inscripción</div>
+          <div className="cell col-esp">Especialidad</div>
+          <div className="cell col-acc">Acción</div>
+        </div>
 
-                const rawSel = seleccion[row.id_alumno];
-                const rawDb = row.id_especialidad != null ? String(row.id_especialidad) : "";
-                const value = String(rawSel ?? rawDb ?? "");
+        {/* Body con alto fijo cuando carga / vacío */}
+        <div
+          className={
+            "grid-body" +
+            (tablaLoading || alumnos.length === 0
+              ? " grid-body-fixed"
+              : "")
+          }
+        >
+          {tablaLoading ? (
+            <div className="grid-row grid-row-full">
+              <div className="cell cell-full">Cargando alumnos…</div>
+            </div>
+          ) : alumnos.length === 0 ? (
+            <div className="grid-row grid-row-full">
+              <div className="cell cell-full">No hay alumnos cargados.</div>
+            </div>
+          ) : (
+            alumnos.map((row, idx) => {
+              const inscripto = row.id_especialidad !== null;
 
-                const espSel = especialidades.find(
-                  (esp) => String(esp.id) === (value || "")
-                );
-                const sinCupo =
-                  espSel && !esAusente(espSel.nombre) && Number(espSel.cupos_actuales || 0) <= 0;
+              const rawSel = seleccion[row.id_alumno];
+              const rawDb =
+                row.id_especialidad != null
+                  ? String(row.id_especialidad)
+                  : "";
+              const value = String(rawSel ?? rawDb ?? "");
 
-                return (
-                  <tr
-                    key={row.id_alumno}
-                    className={sinCupo && !inscripto ? "tr-sin-cupo" : ""}
-                  >
-                    <td>{row.orden ?? (idx + 1)}</td>
-                    <td>
-                      <div className="alumno-nombre">{row.alumno}</div>
-                      <div className="alumno-dni">DNI: {row.dni}</div>
-                      {inscripto && (
-                        <div className="chip-inscripto">
-                          Inscripto: {row.especialidad}
-                        </div>
-                      )}
-                    </td>
+              const espSel = especialidades.find(
+                (esp) => String(esp.id) === (value || "")
+              );
 
-                    <td className="td-center">
+              const sinCupo =
+                espSel &&
+                !esAusente(espSel.nombre) &&
+                Number(espSel.cupos_actuales || 0) <= 0;
+
+              const stripeClass = idx % 2 === 0 ? "row-impar" : "row-par";
+
+              return (
+                <div
+                  key={row.id_alumno}
+                  className={
+                    "grid-row " +
+                    stripeClass +
+                    (sinCupo && !inscripto ? " row-sin-cupo" : "")
+                  }
+                >
+                  {/* Orden */}
+                  <div className="cell col-orden">
+                    {row.orden ?? idx + 1}
+                  </div>
+
+                  {/* Alumno */}
+                  <div className="cell col-alumno">
+                    <div className="alumno-nombre">{row.alumno}</div>
+                  </div>
+
+                  {/* Inscripción */}
+                  <div className="cell col-insc">
+                    {inscripto ? (
+                      <span
+                        className={
+                          "tag-insc " +
+                          (row.especialidad &&
+                          esAusente(row.especialidad)
+                            ? "tag-ausente"
+                            : "tag-ok")
+                        }
+                      >
+                        {row.especialidad || "Inscripto"}
+                      </span>
+                    ) : (
+                      <span className="tag-insc tag-pendiente">
+                        Sin inscripción
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Select Especialidad */}
+                  <div className="cell col-esp">
+                    <div className="select-wrap">
                       <select
                         value={value}
-                        onChange={(e) => onChangeSelect(row.id_alumno, e.target.value)}
+                        onChange={(e) =>
+                          onChangeSelect(row.id_alumno, e.target.value)
+                        }
                         disabled={inscripto}
-                        className={`select ${sinCupo ? "select-sin-cupo" : ""}`}
+                        className={
+                          "select " +
+                          (sinCupo && !inscripto ? "select-sin-cupo" : "")
+                        }
                       >
                         <option value="">— Seleccionar —</option>
                         {especialidades.map((esp) => {
                           const disp = Number(esp.cupos_actuales || 0);
-                          const bloqueada = disp <= 0 && !esAusente(esp.nombre);
+                          const bloqueada =
+                            disp <= 0 && !esAusente(esp.nombre);
+
                           return (
                             <option
                               key={esp.id}
@@ -283,48 +364,58 @@ export default function PestanaEleccion({ BASE_URL, fetchJSON, showToast }) {
                       </select>
 
                       {sinCupo && !inscripto && (
-                        <div className="sin-cupo-warning">⚠ Sin cupo disponible</div>
+                        <div className="sin-cupo-warning">
+                          ⚠ Sin cupo disponible
+                        </div>
                       )}
-                    </td>
+                    </div>
+                  </div>
 
-                    <td className="td-center">
-                      <div className="acciones">
-                        {!inscripto && (
-                          <button
-                            type="button"
-                            className={`btn ${sinCupo ? "btn-disabled" : "btn-accent"}`}
-                            onClick={() => onConfirmar(row)}
-                            disabled={sinCupo}
-                          >
-                            Confirmar
-                          </button>
-                        )}
-                        {inscripto && (
-                          <button
-                            type="button"
-                            className="btn btn-neutral"
-                            onClick={() => onCancelar(row)}
-                          >
-                            Cancelar
-                          </button>
-                        )}
-
+                  {/* Acciones */}
+                  <div className="cell col-acc">
+                    <div className="acciones">
+                      {!inscripto && (
                         <button
                           type="button"
-                          className="btn btn-primary-outline"
-                          onClick={() => { setStartIndex(idx); setOpenPresent(true); }}
-                          title="Abrir Modo Pantalla desde este alumno"
+                          className={
+                            "btns " +
+                            (sinCupo ? "btn-disabled" : "btn-accent")
+                          }
+                          onClick={() => onConfirmar(row)}
+                          disabled={sinCupo}
                         >
-                          Pantalla
+                          Confirmar
                         </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+                      )}
+
+                      {inscripto && (
+                        <button
+                          type="button"
+                          className="btn btn-neutral"
+                          onClick={() => onCancelar(row)}
+                        >
+                          Cancelar
+                        </button>
+                      )}
+
+                      <button
+                        type="button"
+                        className="btn btn-primary-outline"
+                        onClick={() => {
+                          setStartIndex(idx);
+                          setOpenPresent(true);
+                        }}
+                        title="Abrir Modo Pantalla desde este alumno"
+                      >
+                        Pantalla
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
 
       {/* Modal Modo Pantalla */}
@@ -343,3 +434,5 @@ export default function PestanaEleccion({ BASE_URL, fetchJSON, showToast }) {
     </>
   );
 }
+
+export default forwardRef(PestanaEleccionInner);

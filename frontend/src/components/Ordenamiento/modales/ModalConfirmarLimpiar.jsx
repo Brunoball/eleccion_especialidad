@@ -1,14 +1,23 @@
+// src/components/Ordenar/modales/ModalConfirmarLimpiar.jsx
 import React, { useEffect, useRef } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
+import "../../Principal/principal.css"; // asegúrate de importar donde estén las clases modalprincipal-*
 
 const ModalConfirmarLimpiar = ({ open, onClose, onConfirm, loading, error }) => {
   const cancelBtnRef = useRef(null);
 
   useEffect(() => {
     if (!open) return;
+
     cancelBtnRef.current?.focus();
-    const onKey = (e) => e.key === "Escape" && onClose();
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") onClose();
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
   }, [open, onClose]);
 
   if (!open) return null;
@@ -17,90 +26,75 @@ const ModalConfirmarLimpiar = ({ open, onClose, onConfirm, loading, error }) => 
 
   return (
     <div
-      onClick={onClose}
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,.35)",
-        display: "grid",
-        placeItems: "center",
-        zIndex: 9999,
-      }}
+      className="modalprincipal-overlay"
       role="dialog"
       aria-modal="true"
+      aria-labelledby="modalprincipal-title-limpiar"
+      onMouseDown={onClose}
     >
       <div
-        onClick={stop}
-        style={{
-          width: "min(520px, 92vw)",
-          background: "#fff",
-          borderRadius: 12,
-          padding: 20,
-          boxShadow: "0 12px 30px rgba(0,0,0,.35)",
-        }}
+        className="modalprincipal-container modalprincipal--danger"
+        onMouseDown={stop}
       >
-        <h2 style={{ marginTop: 0, color: "#b42318" }}>
-          Confirmar limpieza de datos
-        </h2>
+        <div className="modalprincipal__icon" aria-hidden="true">
+          <FontAwesomeIcon icon={faTriangleExclamation} />
+        </div>
 
-        <p style={{ lineHeight: 1.45 }}>
-          Esta acción <strong>eliminará TODOS los registros</strong> de{" "}
-          <code>eleccion</code>
-          {/* si tu endpoint también borra alumnos, deja este bloque visible */}
-          {" "}y de <code>alumnos</code>,{" "}
-          además <strong>reiniciará</strong> los{" "}
-          <code>cupos_actuales</code> de cada especialidad al valor de{" "}
-          <code>cupo</code>.
-        </p>
-        <p style={{ marginTop: 8 }}>
-          La acción es <strong>irreversible</strong>. ¿Deseás continuar?
+        <h3
+          id="modalprincipal-title-limpiar"
+          className="modalprincipal-title"
+        >
+          Confirmar limpieza total de datos
+        </h3>
+
+        <p className="modalprincipal-text">
+          Esta acción{" "}
+          <span className="danger-strong">
+            eliminará TODOS los registros de <code>eleccion</code> y{" "}
+            <code>alumnos</code>
+          </span>
+          , y además{" "}
+          <span className="danger-strong">
+            reiniciará los <code>cupos_actuales</code>
+          </span>{" "}
+          de cada especialidad al valor de <code>cupo</code>.
+          <br />
+          Una vez realizada, la operación es{" "}
+          <strong>irreversible</strong>.
         </p>
 
-        {error ? (
+        {error && (
           <div
             style={{
               background: "#ffe6e3",
               border: "1px solid #ffb4ab",
               color: "#7a271a",
               padding: "8px 10px",
-              borderRadius: 8,
-              marginTop: 8,
+              borderRadius: "12px",
+              margin: "0 24px 18px",
               fontWeight: 600,
+              fontSize: "0.95rem",
             }}
           >
             {error}
           </div>
-        ) : null}
+        )}
 
-        <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 18 }}>
+        <div className="modalprincipal-buttons">
           <button
-            ref={cancelBtnRef}
-            disabled={loading}
+            type="button"
+            className="modalprincipal-btn modalprincipal-btn--ghost"
             onClick={onClose}
-            style={{
-              padding: "10px 16px",
-              borderRadius: 8,
-              border: "1px solid #cbd5e1",
-              background: "#fff",
-              cursor: "pointer",
-              fontWeight: 700,
-            }}
+            disabled={loading}
+            ref={cancelBtnRef}
           >
             Cancelar
           </button>
           <button
-            disabled={loading}
+            type="button"
+            className="modalprincipal-btn modalprincipal-btn--solid-danger"
             onClick={onConfirm}
-            style={{
-              padding: "10px 16px",
-              borderRadius: 8,
-              border: "none",
-              background: "#d92d20",
-              color: "#fff",
-              cursor: "pointer",
-              fontWeight: 800,
-              opacity: loading ? 0.7 : 1,
-            }}
+            disabled={loading}
           >
             {loading ? "Eliminando..." : "Sí, limpiar todo"}
           </button>

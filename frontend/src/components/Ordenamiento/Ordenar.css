@@ -1,0 +1,364 @@
+/* =========================
+   ORDENAR (estilo institucional con prefijo org-)
+   ========================= */
+
+/* 🎬 Efecto de entrada tipo modal para la página */
+.org-ordenar-page {
+  min-height: 100vh;
+  background: url("http://localhost:3000/static/media/img_fondo.8132e67a1f74f8fbb605.png")
+    center center / cover no-repeat fixed;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px;
+
+  /* Animación sutil al montar */
+  opacity: 0;
+  animation: org-ordenar-fade-in 160ms ease-out forwards;
+}
+
+/* 🎬 Contenedor como tarjeta/modal con pop-in suave */
+.org-ordenar-container {
+  width: 100%;
+  max-width: 1300px;
+  height: 95vh;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(6px);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  padding: 24px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow: hidden;
+
+  /* Animación tipo modal */
+  opacity: 0;
+  transform: translateY(10px) scale(0.97);
+  transform-origin: center top;
+  animation: org-ordenar-panel-in 260ms ease-out forwards;
+  animation-delay: 40ms;
+}
+
+/* Keyframes entrada página */
+@keyframes org-ordenar-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Keyframes entrada contenedor (modal) */
+@keyframes org-ordenar-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* ===== HEADER ===== */
+
+.org-ordenar-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+
+.org-ordenar-header-bar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.org-ordenar-header-text h1 {
+  font-size: 26px;
+  color: var(--blue-inst-primary);
+  font-weight: 800;
+  margin: 0 0 4px 0;
+}
+
+.org-ordenar-header-text p {
+  color: var(--blue-inst-gray-600);
+  font-size: 14px;
+  margin: 0;
+}
+
+/* Botón volver minimalista */
+.org-ordenar-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--blue-inst-primary);
+  background: var(--blue-inst-primary);
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05);
+}
+
+.org-ordenar-back-btn i {
+  font-size: 12px;
+}
+
+.org-ordenar-back-btn:hover {
+  background: #ffffff;
+  color: var(--blue-inst-primary);
+  border: 1px solid var(--blue-inst-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.12);
+}
+
+/* ===== Acciones ===== */
+
+.org-ordenar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* ===== BOTONES GENERALES ===== */
+
+.org-btn {
+  padding: 9px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  border: 1px solid var(--blue-inst-gray-300);
+  background: #ffffff;
+  color: var(--blue-inst-dark);
+  cursor: pointer;
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.18s ease;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+.org-btn i {
+  font-size: 13px;
+}
+
+.org-btn:hover {
+  background: var(--blue-inst-dark);
+  color: #ffffff;
+  border: 1px solid var(--blue-inst-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.12);
+}
+
+/* Variantes */
+.org-btnd-primary {
+  background: var(--blue-inst-primary);
+  color: #ffffff;
+  border-color: var(--blue-inst-primary);
+}
+.org-btnd-primary:hover {
+  background: #ffffff;
+  color: var(--blue-inst-primary);
+  border: 1px solid var(--blue-inst-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.16);
+}
+
+.org-btn-success {
+  background: var(--blue-inst-success);
+  color: #ffffff;
+  border-color: var(--blue-inst-success);
+}
+.org-btn-success:hover {
+  background: #ffffff;
+  color: var(--blue-inst-success);
+  border: 1px solid var(--blue-inst-success);
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(16, 185, 129, 0.22);
+}
+
+.org-btn-danger {
+  background: var(--blue-inst-danger);
+  color: #ffffff;
+  border-color: var(--blue-inst-danger);
+}
+.org-btn-danger:hover {
+  background: #ffffff;
+  color: var(--blue-inst-danger);
+  border: 1px solid var(--blue-inst-danger);
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(211, 47, 47, 0.22);
+}
+
+.org-btn-secondary {
+  background: var(--blue-inst-gray-700);
+  color: #ffffff;
+  border-color: var(--blue-inst-gray-700);
+}
+.org-btn-secondary:hover {
+  background: #ffffff;
+  color: var(--blue-inst-gray-700);
+  border: 1px solid var(--blue-inst-gray-700);
+  transform: translateY(-2px);
+  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.18);
+}
+
+/* ===== MAIN / GRID ===== */
+
+.org-ordenar-main {
+  margin-top: 4px;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* Card contenedor de la tabla */
+.org-ordenar-table-wrapper {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid var(--blue-inst-gray-200);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+}
+
+/* Header de info */
+.org-ordenar-table-header {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--blue-inst-gray-200);
+  font-size: 12px;
+  color: var(--blue-inst-gray-600);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.org-ordenar-table-hint {
+  opacity: 0.9;
+}
+
+/* Scroll sólo en la tabla */
+.org-ordenar-table-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+/* Contenedor grid */
+.org-ordenar-grid {
+  display: block;
+  min-width: 900px;
+}
+
+/* Cabecera columnas */
+.org-ordenar-grid-header,
+.org-ordenar-grid-header-cell {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: grid;
+  align-items: center;
+  background: var(--blue-inst-primary);
+  color: #ffffff;
+  border-bottom: 1px solid var(--blue-inst-primary-dark);
+}
+
+.org-ordenar-grid-header-cell {
+  padding: 10px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Filas */
+.org-ordenar-grid-row {
+  display: grid;
+  align-items: center;
+  border-bottom: 1px solid var(--blue-inst-gray-200);
+  transition: background-color 0.16s ease;
+  background-color: var(--row-bg, transparent);
+}
+
+/* Celdas */
+.org-ordenar-grid-cell {
+  padding: 9px 8px;
+  font-size: 12px;
+  text-align: center;
+  color: var(--blue-inst-dark);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  background-color: inherit;
+}
+
+.org-ordenar-grid-row:hover {
+  background-color: #f8fafc;
+}
+
+/* Vacío */
+.org-ordenar-empty-grid {
+  display: grid;
+  grid-column: 1 / -1;
+  padding: 32px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--blue-inst-gray-500);
+  font-style: italic;
+}
+
+/* ===== FOOTER ===== */
+
+.org-ordenar-footer {
+  flex: 0 0 auto;
+  text-align: center;
+  color: var(--blue-inst-gray-500);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* ===== RESPONSIVE ===== */
+
+@media (max-width: 768px) {
+  .org-ordenar-page {
+    padding: 20px 10px;
+  }
+
+  .org-ordenar-container {
+    padding: 16px 14px;
+    border-radius: 10px;
+    height: 95vh;
+  }
+
+  .org-ordenar-header-bar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .org-ordenar-actions {
+    gap: 6px;
+  }
+
+  .org-btn {
+    padding: 7px 12px;
+    font-size: 12px;
+  }
+
+  .org-ordenar-grid {
+    min-width: 700px;
+  }
+}

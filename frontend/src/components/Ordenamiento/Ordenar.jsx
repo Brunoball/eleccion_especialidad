@@ -1,4 +1,3 @@
-// src/components/Ordenamiento/Ordenar.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../../config/config";
@@ -8,20 +7,19 @@ import ModalImportar from "./modales/ModalImportar";
 import ModalOrdenar from "./modales/ModalOrdenar";
 import ModalConfirmarLimpiar from "./modales/ModalConfirmarLimpiar";
 import ModalCriterios from "./modales/ModalCriterios";
-import "./Ordenar.css";
 
-// >>> NUEVO: criterios compartidos
-import { CRITERIA_COLORS, resolverCriterio } from "./criterios";
+import "./Ordenar.css";
+import "@fortawesome/fontawesome-free/css/all.min.css";
+import Toast from "../Global/Toast";
+import { resolverCriterio } from "./criterios";
 
 const API = `${BASE_URL.replace(/\/$/, "")}/api.php`;
 
 export default function Ordenar() {
   const navigate = useNavigate();
 
-  // tabla + ordenamiento
   const [rows, setRows] = useState([]);
   const [columns, setColumns] = useState([]);
-  const [sort, setSort] = useState({ key: null, dir: "asc" });
 
   // modales
   const [openImport, setOpenImport] = useState(false);
@@ -33,15 +31,23 @@ export default function Ordenar() {
   const [clearLoading, setClearLoading] = useState(false);
   const [clearError, setClearError] = useState("");
 
-  // avisos
-  const [ok, setOk] = useState("");
-  const [err, setErr] = useState("");
+  // toast
+  const [toast, setToast] = useState(null); // { tipo, mensaje, duracion }
+
+  const showToast = (tipo, mensaje, duracion = 3000) => {
+    setToast({ tipo, mensaje, duracion });
+  };
 
   const fetchJSON = async (url, opts) => {
     const res = await fetch(url, opts);
     const txt = await res.text();
     let data = {};
-    try { data = txt ? JSON.parse(txt) : {}; } catch {}
+    try {
+      data = txt ? JSON.parse(txt) : {};
+    } catch {
+      // JSON inválido
+    }
+
     if (!res.ok || data?.exito === false) {
       throw new Error(data?.mensaje || `HTTP ${res.status}`);
     }
@@ -51,23 +57,32 @@ export default function Ordenar() {
   // === CARGA INICIAL / REFRESH ===
   const cargarTabla = async () => {
     try {
-      setErr("");
       const j = await fetchJSON(`${API}?action=ordenar_obtener_tabla`);
       const arr = Array.isArray(j?.data) ? j.data : [];
-      const cols = Array.isArray(j?.columns) && j.columns.length
-        ? j.columns
-        : (arr[0] ? Object.keys(arr[0]) : []);
+      const cols =
+        Array.isArray(j?.columns) && j.columns.length
+          ? j.columns
+          : arr[0]
+          ? Object.keys(arr[0])
+          : [];
+
       setColumns(cols);
       setRows(arr);
     } catch (e) {
       console.error("Error cargando tabla:", e);
-      setErr(e.message || "No se pudo obtener la tabla de alumnos.");
       setColumns([]);
       setRows([]);
+      showToast(
+        "error",
+        e.message || "No se pudo obtener la tabla de alumnos."
+      );
     }
   };
 
-  useEffect(() => { cargarTabla(); }, []);
+  useEffect(() => {
+    cargarTabla();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Etiquetas de cabecera
   const columnLabels = useMemo(() => {
@@ -76,56 +91,18 @@ export default function Ordenar() {
     return o;
   }, [columns]);
 
-  // Comparador para ordenar
-  const smartCompare = (aRaw, bRaw) => {
-    const A = aRaw ?? "";
-    const B = bRaw ?? "";
-
-    const aNum = Number(A);
-    const bNum = Number(B);
-    const aNumOk = A !== "" && Number.isFinite(aNum);
-    const bNumOk = B !== "" && Number.isFinite(bNum);
-    if (aNumOk && bNumOk) return aNum - bNum;
-
-    const aTime = Date.parse(String(A));
-    const bTime = Date.parse(String(B));
-    const aDateOk = !Number.isNaN(aTime);
-    const bDateOk = !Number.isNaN(bTime);
-    if (aDateOk && bDateOk) return aTime - bTime;
-
-    const aStr = String(A).toLowerCase();
-    const bStr = String(B).toLowerCase();
-    if (aStr < bStr) return -1;
-    if (aStr > bStr) return 1;
-    return 0;
-  };
-
-  const sortedRows = useMemo(() => {
-    if (!sort.key) return rows;
-    const dir = sort.dir === "asc" ? 1 : -1;
-    const k = sort.key;
-    return [...rows].sort((a, b) => {
-      const comp = smartCompare(a?.[k], b?.[k]);
-      return comp * dir;
-    });
-  }, [rows, sort]);
-
-  const onHeaderClick = (key) => {
-    setSort((prev) =>
-      prev.key === key
-        ? { key, dir: prev.dir === "asc" ? "desc" : "asc" }
-        : { key, dir: "asc" }
-    );
-  };
-
-  // Mostrar valores exactos - preservar "0", "1", etc.
   const raw = (v) => {
-    if (v === null || v === undefined) return "";
-    if (v === "") return "";
+    if (v === null || v === undefined || v === "") return "";
     return String(v);
   };
 
-  // ====== EXPORTACIÓN ======
+  // Template de columnas para el grid
+  const gridTemplate = useMemo(() => {
+    if (!columns.length) return "1fr";
+    return `repeat(${columns.length}, minmax(120px, 1fr))`;
+  }, [columns]);
+
+  // ====== EXPORTACIÓN (usa el orden actual) ======
   const downloadBlob = (blob, filename) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -145,6 +122,7 @@ export default function Ordenar() {
       }
       return str;
     };
+
     const lines = [headers.map(esc).join(",")];
     for (let i = 1; i < rowsAOA.length; i++) {
       lines.push(rowsAOA[i].map(esc).join(","));
@@ -154,13 +132,14 @@ export default function Ordenar() {
 
   const buildAOAFromView = () => {
     const headers = columns.map((c) => columnLabels[c] || c);
-    const body = sortedRows.map((r) => columns.map((c) => raw(r?.[c])));
+    const body = rows.map((r) => columns.map((c) => raw(r?.[c])));
     return [headers, ...body];
   };
 
   const autoColWidths = (aoa) => {
     const colCount = aoa[0]?.length || 0;
     const widths = Array(colCount).fill(10);
+
     for (let c = 0; c < colCount; c++) {
       let max = 10;
       for (let r = 0; r < aoa.length; r++) {
@@ -174,300 +153,244 @@ export default function Ordenar() {
 
   const handleExportExcel = async () => {
     try {
-      if (!columns.length || !sortedRows.length) {
-        setErr("No hay datos para exportar.");
+      if (!columns.length || !rows.length) {
+        showToast("advertencia", "No hay datos para exportar.");
         return;
       }
+
       const aoa = buildAOAFromView();
+
       try {
-        const XLSX = (await import(/* webpackChunkName: "xlsx" */ "xlsx")).default || (await import("xlsx"));
+        const mod = await import("xlsx");
+        const XLSX = mod.default || mod;
+
         const ws = XLSX.utils.aoa_to_sheet(aoa);
         ws["!cols"] = autoColWidths(aoa);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Alumnos");
+
         const out = XLSX.write(wb, { bookType: "xlsx", type: "array" });
-        downloadBlob(new Blob([out], { type: "application/octet-stream" }), `alumnos_ordenamiento_${new Date().toISOString().slice(0,10)}.xlsx`);
-        setOk("Archivo Excel exportado correctamente.");
-        setErr("");
+        downloadBlob(
+          new Blob([out], { type: "application/octet-stream" }),
+          `alumnos_ordenamiento_${new Date()
+            .toISOString()
+            .slice(0, 10)}.xlsx`
+        );
+        showToast("exito", "Archivo Excel exportado correctamente.");
         return;
       } catch (e) {
         console.warn("No se pudo exportar XLSX, se usa CSV. Detalle:", e);
       }
+
       const csv = toCSV(aoa[0], aoa);
-      downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), `alumnos_ordenamiento_${new Date().toISOString().slice(0,10)}.csv`);
-      setOk("Archivo CSV exportado correctamente (fallback).");
-      setErr("");
+      downloadBlob(
+        new Blob([csv], { type: "text/csv;charset=utf-8" }),
+        `alumnos_ordenamiento_${new Date().toISOString().slice(0, 10)}.csv`
+      );
+      showToast(
+        "exito",
+        "Archivo CSV exportado correctamente (exportación alternativa)."
+      );
     } catch (e) {
       console.error(e);
-      setErr("No se pudo exportar el archivo.");
+      showToast("error", "No se pudo exportar el archivo.");
     }
   };
 
-  // Limpiar todo
+  // ====== LIMPIAR TODO ======
   const handleClearConfirm = async () => {
     try {
       setClearError("");
       setClearLoading(true);
+
       await fetchJSON(`${API}?action=reset_elecciones&confirmar=1`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ confirmar: 1 }),
       });
+
       setClearLoading(false);
       setOpenClear(false);
       setRows([]);
-      setOk("Se limpiaron los datos y se reiniciaron los cupos.");
-      setErr("");
+      showToast(
+        "exito",
+        "Se limpiaron los datos y se reiniciaron los cupos."
+      );
     } catch (e) {
       setClearLoading(false);
-      setClearError(e.message || "No se pudo limpiar.");
+      const msg = e.message || "No se pudo limpiar.";
+      setClearError(msg);
+      showToast("error", msg);
     }
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        display: "grid",
-        gridTemplateRows: "auto 1fr auto",
-        gap: 16,
-        background: "var(--bg, #f6f7fb)",
-        padding: 16,
-      }}
-    >
-      {/* Header */}
-      <header
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 12,
-          maxWidth: 1400,
-          margin: "0 auto",
-          width: "100%",
-        }}
-      >
-        <button
-          onClick={() => navigate("/panel")}
-          className="modalprincipal-btn modalprincipal-btn--ghost"
-          style={{ padding: "10px 14px" }}
-        >
-          ← Volver
-        </button>
+    <div className="org-ordenar-page">
+      <div className="org-ordenar-container">
+        {/* HEADER */}
+        <header className="org-ordenar-header">
+          <div className="org-ordenar-header-bar">
+            <div className="org-ordenar-header-text">
+              <h1>Ordenamiento de alumnos</h1>
+              <p>
+                Vista de ordenamiento de alumnos según criterios definidos por el
+                equipo directivo.
+              </p>
+            </div>
 
-        <h2 style={{ margin: 0, fontWeight: 700 }}>Ordenamiento - Tabla Alumnos</h2>
-
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
-          <button
-            onClick={() => setOpenCriterios(true)}
-            className="modalprincipal-btn modalprincipal-btn--solid"
-            style={{ padding: "10px 14px", background: "#6b7280", color: "#fff" }}
-            title="Ver criterios de ordenamiento"
-          >
-            Ver criterios
-          </button>
-
-          <button
-            onClick={() => setOpenImport(true)}
-            className="modalprincipal-btn modalprincipal-btn--solid"
-            style={{ padding: "10px 14px" }}
-            title="Importar XLSX/CSV"
-          >
-            Importar datos
-          </button>
-
-          <button
-            onClick={() => setOpenOrdenar(true)}
-            className="modalprincipal-btn modalprincipal-btn--solid"
-            style={{ padding: "10px 14px", background: "#2563eb", color: "#fff" }}
-            title="Vista previa y aplicar ranking"
-          >
-            Ordenar Ranking
-          </button>
-
-          <button
-            onClick={handleExportExcel}
-            className="modalprincipal-btn modalprincipal-btn--solid"
-            style={{ padding: "10px 14px", background: "#059669", color: "#fff" }}
-            title="Exportar lo visible a Excel"
-          >
-            Exportar Excel
-          </button>
-
-          <button
-            onClick={() => { setClearError(""); setOpenClear(true); }}
-            className="modalprincipal-btn modalprincipal-btn--solid"
-            style={{ padding: "10px 14px", background: "#d92d20", color: "#fff" }}
-            title="Eliminar todo y reiniciar cupos"
-          >
-            Limpiar todo
-          </button>
-        </div>
-      </header>
-
-      {/* Mensajes */}
-      <div style={{ maxWidth: 1400, margin: "0 auto", width: "100%" }}>
-        {ok && (
-          <div style={{
-            padding: "10px 12px", borderRadius: 10, background: "#e7f8ec",
-            border: "1px solid #93e5b1", color: "#0a6b2b", fontWeight: 600, marginBottom: 8,
-          }}>
-            {ok}
+            <button
+              onClick={() => navigate("/panel")}
+              className="org-ordenar-back-btn"
+            >
+              <i className="fa-solid fa-arrow-left" aria-hidden="true" />
+              <span>Volver</span>
+            </button>
           </div>
-        )}
-        {err && (
-          <div style={{
-            padding: "10px 12px", borderRadius: 10, background: "#ffe6e3",
-            border: "1px solid #ffb4ab", color: "#7a271a", fontWeight: 600, marginBottom: 8,
-          }}>
-            {err}
+
+          {/* Acciones principales */}
+          <div className="org-ordenar-actions">
+            <button
+              onClick={() => setOpenCriterios(true)}
+              className="org-btn org-btn-secondary"
+            >
+              <i className="fa-solid fa-list-check" aria-hidden="true" />
+              <span>Criterios</span>
+            </button>
+
+            <button
+              onClick={() => setOpenImport(true)}
+              className="org-btn"
+            >
+              <i className="fa-solid fa-file-import" aria-hidden="true" />
+              <span>Importar datos</span>
+            </button>
+
+            <button
+              onClick={() => setOpenOrdenar(true)}
+              className="org-btn org-btnd-primary"
+            >
+              <i
+                className="fa-solid fa-arrow-down-short-wide"
+                aria-hidden="true"
+              />
+              <span>Ordenar ranking</span>
+            </button>
+
+            <button
+              onClick={handleExportExcel}
+              className="org-btn org-btn-success"
+            >
+              <i className="fa-regular fa-file-excel" aria-hidden="true" />
+              <span>Exportar Excel</span>
+            </button>
+
+            <button
+              onClick={() => {
+                setClearError("");
+                setOpenClear(true);
+              }}
+              className="org-btn org-btn-danger"
+            >
+              <i className="fa-solid fa-trash-can" aria-hidden="true" />
+              <span>Limpiar todo</span>
+            </button>
           </div>
-        )}
+        </header>
+
+        {/* MAIN */}
+        <main className="org-ordenar-main">
+          <div className="org-ordenar-table-wrapper">
+            <div className="org-ordenar-table-header">
+              <span>
+                {rows.length
+                  ? `Registros: ${rows.length} • Columnas: ${columns.length}`
+                  : "Sin datos. Importá un CSV/XLSX para comenzar."}
+              </span>
+              <span className="org-ordenar-table-hint">
+                Desplazá para ver todos los datos →
+              </span>
+            </div>
+
+            <div className="org-ordenar-table-scroll">
+              <div className="org-ordenar-grid">
+                {/* Cabecera */}
+                {columns.length > 0 && (
+                  <div
+                    className="org-ordenar-grid-header"
+                    style={{ gridTemplateColumns: gridTemplate }}
+                  >
+                    {columns.map((col) => (
+                      <div
+                        key={col}
+                        className="org-ordenar-grid-header-cell"
+                      >
+                        {columnLabels[col] || col}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Filas */}
+                {rows.length > 0 ? (
+                  rows.map((row, idx) => {
+                    const crit = resolverCriterio(row) || {};
+                    return (
+                      <div
+                        key={idx}
+                        className="org-ordenar-grid-row"
+                        title={
+                          crit.label
+                            ? `Criterio: ${crit.label} (#${crit.id})`
+                            : ""
+                        }
+                        style={{
+                          gridTemplateColumns: gridTemplate,
+                          ...(crit.color ? { "--row-bg": crit.color } : {}),
+                        }}
+                      >
+                        {columns.map((col) => (
+                          <div
+                            key={col}
+                            className="org-ordenar-grid-cell"
+                            title={raw(row?.[col])}
+                          >
+                            {raw(row?.[col])}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div
+                    className="org-ordenar-empty-grid"
+                    style={{ gridTemplateColumns: gridTemplate }}
+                  >
+                    No hay datos disponibles. Importá un archivo para ver la
+                    tabla de alumnos.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </main>
+
+        {/* FOOTER */}
+        <footer className="org-ordenar-footer">
+          Ordenamiento · IPET 50 · {columns.length} columnas visibles
+        </footer>
       </div>
 
-      {/* Tabla */}
-      <main style={{ display: "grid", placeItems: "center", padding: 8 }}>
-        <div
-          style={{
-            width: "100%",
-            maxWidth: 1400,
-            background: "#fff",
-            border: "1px solid #e5e7eb",
-            borderRadius: 12,
-            boxShadow: "0 6px 20px rgba(0,0,0,.06)",
-            overflow: "hidden",
-          }}
-        >
-          <div
-            style={{
-              padding: "12px 16px",
-              borderBottom: "1px solid #eee",
-              fontSize: 14,
-              color: "#6b7280",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <span>
-              {rows.length
-                ? `Registros: ${rows.length} • Columnas: ${columns.length}`
-                : "Sin datos. Importá un CSV o XLSX para ver la tabla."}
-            </span>
-            <span style={{ fontSize: 12 }}>
-              Desplazá horizontalmente para ver todas las columnas →
-            </span>
-          </div>
-
-          <div style={{ overflow: "auto", maxHeight: "70vh" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "1200px" }}>
-              <thead style={{ position: "sticky", top: 0, background: "#f8fafc", zIndex: 2 }}>
-                <tr>
-                  {columns.map((col) => (
-                    <th
-                      key={col}
-                      onClick={() => onHeaderClick(col)}
-                      style={{
-                        textAlign: "left",
-                        padding: "12px 10px",
-                        borderBottom: "1px solid #e2e8f0",
-                        cursor: "pointer",
-                        whiteSpace: "nowrap",
-                        userSelect: "none",
-                        fontWeight: 600,
-                        fontSize: "13px",
-                        background: "#f1f5f9",
-                        borderRight: "1px solid #e2e8f0",
-                        minWidth: "120px",
-                      }}
-                      title={`Ordenar por ${columnLabels[col] || col}`}
-                    >
-                      <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                        <span>{columnLabels[col] || col}</span>
-                        {sort.key === col && (
-                          <span style={{ fontSize: "10px" }}>
-                            {sort.dir === "asc" ? "▲" : "▼"}
-                          </span>
-                        )}
-                      </div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-
-              <tbody>
-                {sortedRows.map((row, idx) => {
-                  const crit = resolverCriterio(row);
-                  return (
-                    <tr
-                      key={idx}
-                      title={`Criterio: ${crit.label} (#${crit.id})`}
-                      style={{
-                        borderBottom: "1px solid #f1f5f9",
-                        backgroundColor: crit.color,
-                        boxShadow: "inset 4px 0 0 rgba(0,0,0,.08)",
-                      }}
-                    >
-                      {columns.map((col) => (
-                        <td
-                          key={col}
-                          style={{
-                            padding: "10px 10px",
-                            fontSize: "13px",
-                            borderRight: "1px solid #f1f5f9",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            maxWidth: "200px"
-                          }}
-                          title={raw(row?.[col])}
-                        >
-                          {raw(row?.[col])}
-                        </td>
-                      ))}
-                    </tr>
-                  );
-                })}
-
-                {!rows.length && (
-                  <tr>
-                    <td
-                      colSpan={columns.length || 1}
-                      style={{
-                        padding: 40,
-                        color: "#64748b",
-                        fontSize: 14,
-                        textAlign: "center",
-                        fontStyle: "italic"
-                      }}
-                    >
-                      No hay datos disponibles. Importá un archivo CSV o XLSX para comenzar.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </main>
-
-      <footer style={{ textAlign: "center", color: "#9ca3af", fontSize: 12 }}>
-        Ordenamiento • IPET 50 • {columns.length} columnas mostradas
-      </footer>
-
-      {/* === Modales === */}
+      {/* === MODALES === */}
       {openImport && (
         <ModalImportar
           onClose={() => setOpenImport(false)}
           uploadUrl={`${API}?action=alumnos_import_json`}
           onDone={(msg) => {
-            setOk(msg || "Importación completa.");
-            setErr("");
+            showToast("exito", msg || "Importación completa.");
             cargarTabla();
           }}
           onError={(message) => {
-            setErr(message || "No se pudo importar.");
-            setOk("");
+            showToast("error", message || "No se pudo importar.");
           }}
         />
       )}
@@ -476,8 +399,7 @@ export default function Ordenar() {
         open={openOrdenar}
         onClose={() => setOpenOrdenar(false)}
         onApplied={() => {
-          setOk("Ranking aplicado correctamente.");
-          setErr("");
+          showToast("exito", "Ranking aplicado correctamente.");
           cargarTabla();
         }}
       />
@@ -497,6 +419,16 @@ export default function Ordenar() {
         open={openCriterios}
         onClose={() => setOpenCriterios(false)}
       />
+
+      {/* TOAST GLOBAL */}
+      {toast && (
+        <Toast
+          tipo={toast.tipo}
+          mensaje={toast.mensaje}
+          duracion={toast.duracion}
+          onClose={() => setToast(null)}
+        />
+      )}
     </div>
   );
 }

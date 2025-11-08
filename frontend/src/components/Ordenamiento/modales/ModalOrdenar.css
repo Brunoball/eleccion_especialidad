@@ -1,20 +1,278 @@
-.modal-ordenar-backdrop{
-  position:fixed; inset:0; background:rgba(0,0,0,.45);
-  display:flex; align-items:center; justify-content:center; z-index:9999;
+/* src/components/Ordenamiento/modales/ModalOrdenar.css */
+
+/* Overlay con fade-in sutil */
+.ord-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 1200;
+  animation: ord-overlay-in 0.18s ease-out forwards;
 }
-.modal-ordenar{
-  width:min(1100px, 96vw);
-  max-height:88vh; overflow:hidden; background:#fff; border-radius:14px;
-  box-shadow:0 12px 40px rgba(0,0,0,.25); display:flex; flex-direction:column;
+
+/* Modal con altura estable + animación */
+.ord-modal {
+  width: 100%;
+  max-width: 1100px;
+  height: 80vh;         /* 👈 altura fija relativa para mantener tamaño */
+  max-height: 88vh;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: var(--blue-inst-shadow-lg, 0 16px 36px -10px rgba(0,0,0,.22));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+
+  opacity: 0;
+  transform: translateY(-6px) scale(0.97);
+  animation: ord-modal-in 0.22s cubic-bezier(.22,.61,.36,1) forwards;
 }
-.hdr{ padding:14px 18px; border-bottom:1px solid #e8e8e8; }
-.ftr{ padding:12px 18px; border-top:1px solid #e8e8e8; display:flex; gap:10px; justify-content:flex-end;}
-.tbl-wrap{ overflow:auto; padding:10px 14px;}
-.tbl{ width:100%; border-collapse:collapse; font-size:14px;}
-.tbl th, .tbl td{ border-bottom:1px solid #eee; padding:8px 10px; text-align:left; white-space:nowrap;}
-.loading,.empty,.err{ padding:16px; }
-.err{ color:#a40000; background:#ffe9e9; border:1px solid #ffd0d0; margin:10px 14px; border-radius:8px;}
-.btn{ padding:8px 14px; border-radius:10px; border:1px solid #ddd; background:#f7f7f7; font-weight:600; cursor:pointer;}
-.btn-primary{ background:#2563eb; border-color:#1e40af; color:#fff;}
-.btn-neutral{ background:#fafafa;}
-.btn:disabled{ opacity:.6; cursor:not-allowed;}
+
+/* HEADER */
+.ord-header {
+  padding: 14px 18px;
+  background: var(--blue-inst-primary);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ord-header-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ord-header-icon {
+  font-size: 22px;
+}
+
+.ord-header-title h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+}
+
+.ord-header-title p {
+  margin: 0;
+  font-size: 12px;
+  opacity: 0.95;
+}
+
+.ord-close {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #ffffff;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 10px;
+  transition: var(--blue-inst-transition);
+}
+
+.ord-close:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* BODY:
+   - ocupa todo entre header y footer
+   - deja que loader / tabla definan el contenido sin cambiar altura del modal */
+.ord-body {
+  padding: 10px 18px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;        /* ocupa el espacio disponible */
+  min-height: 0;  /* permite scroll interno en hijos */
+}
+
+/* Mensajes de error */
+.ord-error {
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Loader:
+   - ocupa el mismo espacio que la tabla (flex:1)
+   - centrado para no achicar el contenedor */
+.ord-loading {
+  flex: 1;
+  padding: 14px;
+  font-size: 13px;
+  color: var(--blue-inst-gray-800);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.ord-spin {
+  animation: ord-spin 0.7s linear infinite;
+}
+
+/* Tabla con scroll interno:
+   - ocupa todo el alto disponible debajo del error (si lo hay)
+   - el modal no crece, solo scrollea este contenedor */
+.ord-table-wrap {
+  margin-top: 4px;
+  border-radius: 10px;
+  border: 1px solid var(--blue-inst-gray-200);
+  background: #ffffff;
+  flex: 1;
+  min-height: 0;   /* imprescindible para que flex permita scroll */
+  overflow: auto;  /* scroll acá */
+}
+
+.ord-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.ord-table thead {
+  position: sticky;
+  top: 0;
+  background: #eff6ff;
+  z-index: 1;
+}
+
+.ord-table th,
+.ord-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  text-align: left;
+}
+
+.ord-table th {
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--blue-inst-gray-800);
+}
+
+.ord-table tbody tr:nth-child(even) {
+  background: #f9fafb;
+}
+
+.ord-empty {
+  padding: 14px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--blue-inst-gray-600);
+}
+
+/* FOOTER */
+.ord-footer {
+  padding: 10px 18px 8px;
+  border-top: 1px solid var(--blue-inst-gray-200);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.ord-btn {
+  padding: 9px 16px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 13px;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: var(--blue-inst-transition);
+  box-shadow: var(--blue-inst-shadow-sm, 0 1px 3px rgba(0,0,0,.08));
+}
+
+.ord-btn-neutral {
+  background: var(--blue-inst-gray-200);
+  color: var(--blue-inst-gray-900);
+}
+
+.ord-btn-neutral:hover {
+  background: var(--blue-inst-gray-300);
+}
+
+.ord-btn-primary {
+  background: var(--blue-inst-primary);
+  color: #ffffff;
+}
+
+.ord-btn-primary:hover {
+  background: var(--blue-inst-primary-light);
+  box-shadow: var(--blue-inst-shadow-md, 0 6px 18px rgba(0,0,0,.12));
+}
+
+.ord-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* TIP */
+.ord-tip {
+  padding: 4px 18px 12px;
+  font-size: 11px;
+  color: var(--blue-inst-gray-600);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Animaciones */
+@keyframes ord-overlay-in {
+  from { background: rgba(15, 23, 42, 0.0); }
+  to   { background: rgba(15, 23, 42, 0.40); }
+}
+
+@keyframes ord-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes ord-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .ord-modal {
+    max-width: 100%;
+    height: 80vh; /* mantiene el mismo criterio en mobile */
+  }
+
+  .ord-header-title h3 {
+    font-size: 15px;
+  }
+
+  .ord-table {
+    font-size: 11px;
+  }
+
+  .ord-table th,
+  .ord-table td {
+    padding: 5px 6px;
+  }
+}
