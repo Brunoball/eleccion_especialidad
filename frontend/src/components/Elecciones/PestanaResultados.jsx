@@ -2,38 +2,47 @@
 import React, { useCallback, useEffect, useState } from "react";
 import "./Eleccion.css";
 
-export default function PestanaResultados({ BASE_URL, fetchJSON, showToast }) {
+export default function PestanaResultados({
+  BASE_URL,
+  fetchJSON,
+  showToast,
+  isAdmin, // por si lo usás después
+}) {
   const [filas, setFilas] = useState([]);
   const [especialidades, setEspecialidades] = useState([]);
   const [filtro, setFiltro] = useState("todas");
-  const [loading, setLoading] = useState(true); // 👈 loading general de la tabla
+  const [loading, setLoading] = useState(true);
 
-  const fetchAll = useCallback(async () => {
-    try {
-      setLoading(true); // 👈 arranca ocupando el alto fijo
-      const jElec = await fetchJSON(
-        `${BASE_URL}/api.php?action=obtener_elecciones`
-      );
-      setFilas(jElec?.data || []);
+  const fetchAll = useCallback(
+    async () => {
+      try {
+        setLoading(true);
 
-      const jList = await fetchJSON(
-        `${BASE_URL}/api.php?action=obtener_listas`
-      );
-
-      if (Array.isArray(jList?.especialidad)) {
-        setEspecialidades(jList.especialidad);
-      } else {
-        throw new Error(
-          jList?.mensaje || "No se pudieron cargar las especialidades."
+        const jElec = await fetchJSON(
+          `${BASE_URL}/api.php?action=obtener_elecciones`
         );
+        setFilas(jElec?.data || []);
+
+        const jList = await fetchJSON(
+          `${BASE_URL}/api.php?action=obtener_listas`
+        );
+
+        if (Array.isArray(jList?.especialidad)) {
+          setEspecialidades(jList.especialidad);
+        } else {
+          throw new Error(
+            jList?.mensaje || "No se pudieron cargar las especialidades."
+          );
+        }
+      } catch (err) {
+        console.error("Error al cargar datos:", err);
+        showToast("error", err.message || "No se pudo cargar la tabla.");
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("Error al cargar datos:", err);
-      showToast("error", err.message || "No se pudo cargar la tabla.");
-    } finally {
-      setLoading(false); // 👈 suelta cuando ya tengo datos (o error)
-    }
-  }, [BASE_URL, fetchJSON, showToast]);
+    },
+    [BASE_URL, fetchJSON, showToast]
+  );
 
   useEffect(() => {
     fetchAll();
@@ -52,6 +61,7 @@ export default function PestanaResultados({ BASE_URL, fetchJSON, showToast }) {
       const SEP = ";";
       const quote = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
       const header = ["Orden", "Alumno", "DNI", "Especialidad"];
+
       const rows = visibles.map((f) => [
         f.orden,
         (f.nombre || "").toUpperCase(),
@@ -84,8 +94,6 @@ export default function PestanaResultados({ BASE_URL, fetchJSON, showToast }) {
     }
   };
 
-  const isEmpty = !loading && visibles.length === 0;
-
   return (
     <div className="res-wrapper">
       {/* Filtros + Acciones */}
@@ -111,7 +119,7 @@ export default function PestanaResultados({ BASE_URL, fetchJSON, showToast }) {
       </div>
 
       {/* Tabla estilo grid con header fijo y cuerpo scrolleable */}
-      <div className="res-grid-wrapper">
+      <div className={"res-grid-wrapper res-grid-appear"}>
         {/* Encabezados */}
         <div className="res-grid-row res-grid-header">
           <div className="res-grid-cell">Orden</div>
@@ -120,20 +128,15 @@ export default function PestanaResultados({ BASE_URL, fetchJSON, showToast }) {
           <div className="res-grid-cell">Especialidad</div>
         </div>
 
-        {/* Cuerpo con alto fijo cuando carga / vacío */}
-        <div
-          className={
-            "res-grid-body" +
-            ((loading || isEmpty) ? " res-grid-body-fixed" : "")
-          }
-        >
+        {/* Cuerpo: mensaje dentro de la propia tabla */}
+        <div className="res-grid-body">
           {loading ? (
             <div className="res-grid-row grid-row-full">
               <div className="res-grid-cell cell-full">
                 Cargando resultados…
               </div>
             </div>
-          ) : isEmpty ? (
+          ) : visibles.length === 0 ? (
             <div className="res-grid-row grid-row-full">
               <div className="res-grid-cell cell-full">
                 No hay registros para mostrar.

@@ -1,4 +1,3 @@
-// src/components/Elecciones/modales/ModalPantalla.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import "./ModalPantalla.css";
@@ -28,6 +27,7 @@ const ModalPantalla = ({
 
   const [selectedId, setSelectedId] = useState(value);
 
+  // Bloquear scroll del body cuando el modal está abierto
   useEffect(() => {
     if (open) {
       document.body.style.overflow = "hidden";
@@ -39,10 +39,12 @@ const ModalPantalla = ({
     };
   }, [open]);
 
+  // Resetear índice al abrir según startIndex
   useEffect(() => {
     if (open) setIdx(startIndex);
   }, [open, startIndex]);
 
+  // Mantener selectedId sincronizado con el alumno actual / valor actual
   useEffect(() => {
     setSelectedId(value);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -61,6 +63,7 @@ const ModalPantalla = ({
     !esAusente(espSel.nombre) &&
     Number(espSel.cupos_actuales || 0) <= 0;
 
+  // Navegación con teclado
   useEffect(() => {
     if (!open) return;
 
@@ -82,8 +85,10 @@ const ModalPantalla = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, row, selectedId, sinCupo]);
 
+  // Click en tarjeta de especialidad
   const handleCardClick = (esp) => {
     if (!row || row.id_especialidad !== null) return;
+
     const disp = Number(esp.cupos_actuales || 0);
     const bloqueada = disp <= 0 && !esAusente(esp.nombre);
     if (bloqueada) return;
@@ -92,6 +97,7 @@ const ModalPantalla = ({
     onChangeSelect(row.id_alumno, String(esp.id));
   };
 
+  // Confirmar elección
   const handleConfirm = async () => {
     if (!row) return;
     if (!selectedId || sinCupo) return;
@@ -101,6 +107,7 @@ const ModalPantalla = ({
     next();
   };
 
+  // Cancelar inscripción actual del alumno
   const handleCancel = async () => {
     if (!row) return;
     await onCancelar(row);
@@ -120,7 +127,7 @@ const ModalPantalla = ({
           theme === "light" ? "theme-light" : "theme-dark",
         ].join(" ")}
       >
-        {/* Header */}
+        {/* HEADER */}
         <div className="present-header">
           <h2>Elección de la Especialidad</h2>
 
@@ -174,7 +181,7 @@ const ModalPantalla = ({
           </div>
         </div>
 
-        {/* Cupos arriba */}
+        {/* CUPOS ARRIBA - GRID DE TARJETAS */}
         <div className="present-cupos">
           {especialidades.map((e) => {
             const disp = Number(e.cupos_actuales || 0);
@@ -207,32 +214,50 @@ const ModalPantalla = ({
                     : "Seleccionar"
                 }
               >
-                <div className="present-cupo-nombre">{e.nombre}</div>
-                <div className="present-cupo-disp">
-                  Disponibles:{" "}
-                  <strong className={countClass}>{disp}</strong>
+                <div className="present-cupo-nombre">
+                  {e.nombre}
+                  {aus && (
+                    <span className="present-aus-count">
+                      {disp}
+                    </span>
+                  )}
                 </div>
+
+                {!aus && (
+                  <div className="present-cupo-disp">
+                    Disponibles:{" "}
+                    <strong className={countClass}>{disp}</strong>
+                  </div>
+                )}
               </button>
             );
           })}
         </div>
 
-        {/* Cuerpo */}
+        {/* BODY: CARD DEL ALUMNO + ACCIONES */}
         <div className="present-body">
           {!row ? (
             <div className="present-empty">Sin alumnos disponibles.</div>
           ) : (
             <>
               <div className="present-alumno">
-                <div className="present-order">
-                  Alumno {idx + 1} de {total}
-                </div>
-                <div className="present-name">{row.alumno}</div>
-                {row.id_especialidad !== null && (
-                  <div className="present-inscripto">
-                    Inscripto: {row.especialidad}
+                <div className="present-alumno-card">
+                  <div className="present-order">
+                    Alumno {idx + 1} de {total}
                   </div>
-                )}
+
+                  <div className="present-avatar" aria-hidden="true">
+                    <i className="fa-solid fa-user-graduate" />
+                  </div>
+
+                  <div className="present-name">{row.alumno}</div>
+
+                  {row.id_especialidad !== null && (
+                    <div className="present-inscripto">
+                      Inscripto: <strong>{row.especialidad}</strong>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="present-actions">
@@ -257,9 +282,7 @@ const ModalPantalla = ({
                     onClick={handleConfirm}
                     disabled={!selectedId || sinCupo}
                     title={
-                      !selectedId
-                        ? "Elegí una especialidad"
-                        : "Enter"
+                      !selectedId ? "Elegí una especialidad" : "Enter"
                     }
                   >
                     Confirmar

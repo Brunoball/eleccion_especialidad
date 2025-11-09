@@ -1,8 +1,9 @@
+
 /* ========= Overlay ========= */
 .present-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(9, 12, 23, 0.78);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -14,95 +15,96 @@
 .present-container {
   width: min(1200px, 95vw);
   height: min(92vh, 900px);
-  border-radius: 22px;
+  border-radius: var(--blue-inst-radius-xl);
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+  box-shadow: var(--blue-inst-shadow-xl);
   display: flex;
   flex-direction: column;
   transform-origin: center center;
   animation: modal-pop-in 0.22s ease-out;
 }
 
-/* Variables por tema */
+/* Tema oscuro basado en paleta institucional */
 .theme-dark {
-  --bg-main: #0f1320;
-  --bg-header: #141a2b;
-  --border: #202743;
-  --text: #f7f7fb;
-  --muted: #d9d9e6;
-  --muted-2: #e3e6ff;
+  --bg-main: var(--blue-inst-dark);
+  --bg-header: var(--blue-inst-primary);
+  --border: var(--blue-inst-gray-800);
+  --text: #F9FAFB;
+  --muted: var(--blue-inst-gray-400);
+  --muted-2: var(--blue-inst-gray-300);
 
-  --card-bg: #121a33;
-  --card-border: #202743;
-  --card-hover: #2a3a7a;
+  --card-bg: #0f172a;
+  --card-border: var(--blue-inst-gray-700);
+  --card-hover: var(--blue-inst-primary-light);
 
-  --chip-bg: #1c2547;
-  --chip-border: #33406e;
+  --chip-bg: rgba(15, 23, 42, 0.98);
+  --chip-border: var(--blue-inst-primary-light);
 
-  --btn-nav-bg: #182144;
-  --btn-nav-border: #2a3566;
-  --btn-nav-text: #e7e9f3;
+  --btn-nav-bg: #111827;
+  --btn-nav-border: var(--blue-inst-gray-700);
+  --btn-nav-text: #E5E7EB;
 
-  --btn-ok-bg: #2c7b3f;
-  --btn-ok-border: #3b9c55;
+  --btn-ok-bg: var(--blue-inst-success);
+  --btn-ok-border: #059669;
   --btn-ok-text: #ffffff;
 
-  --btn-cancel-bg: #7a2e2e;
-  --btn-cancel-border: #a34646;
+  --btn-cancel-bg: var(--blue-inst-danger);
+  --btn-cancel-border: #B91C1C;
   --btn-cancel-text: #ffffff;
 
-  --low-bg: #3a3207;
-  --low-border: #bfa63a;
-  --agotado-bg: #3a1212;
-  --agotado-border: #a34646;
+  --low-bg: rgba(245, 158, 11, 0.10);
+  --low-border: var(--blue-inst-warning);
+  --agotado-bg: rgba(220, 38, 38, 0.08);
+  --agotado-border: var(--blue-inst-danger);
 
-  --num-ok: #7ee787;
-  --num-low: #ffd666;
-  --num-no: #ff6b6b;
+  --num-ok: #22C55E;
+  --num-low: #FACC15;
+  --num-no: #F97316;
 
-  --warn: #ff8888;
+  --warn: #FCA5A5;
 }
 
+/* Tema claro basado en paleta institucional */
 .theme-light {
-  --bg-main: #ffffff;
-  --bg-header: #f6f7fb;
-  --border: #dfe3f0;
-  --text: #0e1320;
-  --muted: #3a3f55;
-  --muted-2: #4a5070;
+  --bg-main: var(--blue-inst-light);
+  --bg-header: var(--blue-inst-primary);
+  --border: var(--blue-inst-gray-200);
+  --text: var(--blue-inst-dark);
+  --muted: var(--blue-inst-gray-500);
+  --muted-2: var(--blue-inst-gray-600);
 
-  --card-bg: #f7f8fd;
-  --card-border: #dfe3f0;
-  --card-hover: #9fb7ff;
+  --card-bg: #FFFFFF;
+  --card-border: var(--blue-inst-gray-200);
+  --card-hover: var(--blue-inst-primary-light);
 
-  --chip-bg: #eef1ff;
-  --chip-border: #cfd7ff;
+  --chip-bg: var(--blue-inst-gray-100);
+  --chip-border: var(--blue-inst-primary-light);
 
-  --btn-nav-bg: #eef1ff;
-  --btn-nav-border: #cfd7ff;
-  --btn-nav-text: #1f2a55;
+  --btn-nav-bg: var(--blue-inst-gray-100);
+  --btn-nav-border: var(--blue-inst-gray-300);
+  --btn-nav-text: var(--blue-inst-primary-dark);
 
-  --btn-ok-bg: #1e8e3e;
-  --btn-ok-border: #2aa052;
+  --btn-ok-bg: var(--blue-inst-success);
+  --btn-ok-border: #16A34A;
   --btn-ok-text: #ffffff;
 
-  --btn-cancel-bg: #c93434;
-  --btn-cancel-border: #e05252;
+  --btn-cancel-bg: var(--blue-inst-danger);
+  --btn-cancel-border: #E11D48;
   --btn-cancel-text: #ffffff;
 
-  --low-bg: #fff4cc;
-  --low-border: #e7c54a;
-  --agotado-bg: #ffe0e0;
-  --agotado-border: #e28a8a;
+  --low-bg: #FEF9C3;
+  --low-border: #EAB308;
+  --agotado-bg: #FEE2E2;
+  --agotado-border: #EF4444;
 
-  --num-ok: #0a8f55;
-  --num-low: #b58500;
-  --num-no: #c10f0f;
+  --num-ok: #15803D;
+  --num-low: #B45309;
+  --num-no: #DC2626;
 
-  --warn: #c10f0f;
+  --warn: #B91C1C;
 }
 
-/* Aplicar variables a fondo y texto */
+/* Aplicar fondo/texto generales según tema */
 .theme-dark,
 .theme-light {
   background: var(--bg-main);
@@ -114,16 +116,18 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px 22px;
-  background: var(--bg-header);
-  border-bottom: 1px solid var(--border);
+  padding: 16px 22px;
+  background: var(--blue-inst-primary); /* azul institucional SIEMPRE */
+  color: #ffffff;
+  border-bottom: 1px solid var(--blue-inst-primary-dark);
 }
 
 .present-header h2 {
   margin: 0;
   font-size: 22px;
-  letter-spacing: 0.3px;
-  color: var(--text);
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: #ffffff;
 }
 
 .present-header-actions {
@@ -136,18 +140,16 @@
 .present-close {
   background: transparent;
   border: 0;
-  color: var(--muted);
-  font-size: 28px;
+  color: #ffffff;
+  font-size: 26px;
   line-height: 1;
   cursor: pointer;
   padding: 4px 10px;
   border-radius: 10px;
+  transition: var(--blue-inst-transition);
 }
-.theme-dark .present-close:hover {
-  background: #1b2240;
-}
-.theme-light .present-close:hover {
-  background: #edf0fb;
+.present-close:hover {
+  background: rgba(15, 23, 42, 0.22);
 }
 
 /* Botón toggle tema */
@@ -158,13 +160,14 @@
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--muted);
+  border: 1px solid rgba(255, 255, 255, 0.52);
+  background: rgba(15, 23, 42, 0.12);
+  color: #ffffff;
   cursor: pointer;
+  transition: var(--blue-inst-transition);
 }
 .present-theme-toggle:hover {
-  filter: brightness(1.05);
+  background: rgba(15, 23, 42, 0.24);
 }
 
 /* ========= GRID de tarjetas ========= */
@@ -172,8 +175,7 @@
   display: grid;
   gap: 10px;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  padding: 14px 18px;
-  background: var(--bg-main);
+  padding: 14px 18px 8px;
 }
 
 /* Botón-tarjeta base */
@@ -186,62 +188,78 @@
   background: var(--card-bg);
   border: 2px solid var(--card-border);
   border-radius: 16px;
-  padding: 12px 14px;
+  padding: 10px 12px;
   transition:
     background 0.15s ease,
     border-color 0.15s ease,
     box-shadow 0.15s ease,
-    transform 0.04s ease;
+    transform 0.05s ease;
   cursor: pointer;
   color: var(--text);
+  box-shadow: var(--blue-inst-shadow-sm);
 }
 .present-cupo-card * {
   color: inherit;
 }
 .present-cupo-card:hover {
   border-color: var(--card-hover);
+  box-shadow: var(--blue-inst-shadow-md);
 }
 .present-cupo-card:active {
-  transform: scale(0.995);
+  transform: scale(0.99);
 }
 
 /* Estados de stock */
 .present-cupo-card.low {
   background: var(--low-bg);
   border-color: var(--low-border);
-  box-shadow: 0 0 0 1px
-    color-mix(in srgb, var(--low-border) 25%, transparent) inset;
 }
 
 .present-cupo-card.agotado {
   background: var(--agotado-bg);
   border-color: var(--agotado-border);
-  box-shadow: 0 0 0 1px
-    color-mix(in srgb, var(--agotado-border) 25%, transparent) inset;
 }
 
 /* Seleccionada */
 .present-cupo-card.selected {
   box-shadow:
-    0 0 0 2px #6aa3ff,
-    0 6px 20px rgba(28, 100, 242, 0.25);
-  border-color: #6aa3ff;
+    0 0 0 2px var(--blue-inst-primary-light),
+    var(--blue-inst-shadow-lg);
+  border-color: var(--blue-inst-primary-light);
 }
 
 /* Deshabilitada */
 .present-cupo-card.disabled {
   cursor: not-allowed;
-  opacity: 0.75;
+  opacity: 0.7;
 }
 
 /* Contenido tarjeta */
 .present-cupo-nombre {
   font-weight: 800;
-  margin-bottom: 6px;
+  margin-bottom: 2px;
+  text-align: center;
   letter-spacing: 0.3px;
   text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
+
+.present-aus-count {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  background: var(--chip-bg);
+  border: 1px solid var(--chip-border);
+  color: var(--num-ok);
+}
+
 .present-cupo-disp {
+  text-align: center;
+  font-size: 13px;
   color: var(--muted-2);
 }
 .present-cupo-disp strong.ok {
@@ -259,9 +277,9 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 18px;
-  padding: 20px 22px 24px;
-  overflow: auto;
+  padding: 0 0 16px;
+  gap: 10px;
+  overflow: hidden;
 }
 
 .present-empty {
@@ -270,104 +288,181 @@
   padding: 40px 0;
 }
 
+/* Contenedor que centra el card del alumno */
 .present-alumno {
-  text-align: center;
-  padding: 8px 0 2px;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+/* Tarjeta del alumno */
+.present-alumno-card {
+  width: 100%;
+  max-width: 620px;
+  padding: 18px 26px 16px;
+  border-radius: 22px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--blue-inst-shadow-lg);
+  text-align: center;
+}
+
+/* Texto “Alumno X de Y” */
 .present-order {
-  opacity: 0.8;
+  font-size: 12px;
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  color: var(--muted);
   margin-bottom: 6px;
 }
 
+/* Avatar con icono de estudiante */
+.present-avatar {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 10px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    145deg,
+    rgba(106, 163, 255, 0.16),
+    rgba(14, 116, 221, 0.42)
+  );
+  border: 1px solid rgba(106, 163, 255, 0.7);
+  box-shadow: 0 10px 26px rgba(15, 23, 42, 0.55);
+}
+
+.present-avatar i {
+  font-size: 32px;
+  color: #6aa3ff;
+}
+
+/* Nombre del alumno */
 .present-name {
-  font-size: 44px;
+  font-size: 40px;
   font-weight: 800;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
   line-height: 1.1;
+  color: var(--text);
 }
 
-.present-dni {
-  margin-top: 6px;
-  opacity: 0.9;
-}
-
+/* Chip de inscripto */
 .present-inscripto {
   margin-top: 10px;
   display: inline-block;
-  padding: 6px 10px;
+  padding: 6px 14px;
   border-radius: 999px;
   background: var(--chip-bg);
   border: 1px solid var(--chip-border);
   font-size: 14px;
+  color: var(--muted-2);
 }
 
-/* ========= Acciones ========= */
+/* ========= Acciones (fijas abajo) ========= */
 .present-actions {
   display: flex;
   gap: 12px;
   justify-content: center;
   align-items: center;
-  margin-top: 4px;
+  margin-top: auto;
+  padding: 4px 0 2px;
 }
 
+/* Botones navegación */
 .present-nav {
   background: var(--btn-nav-bg);
   border: 1px solid var(--btn-nav-border);
   color: var(--btn-nav-text);
-  padding: 10px 16px;
-  border-radius: 12px;
+  padding: 10px 18px;
+  border-radius: 14px;
   cursor: pointer;
-  min-width: 140px;
+  min-width: 150px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: var(--blue-inst-transition);
+}
+.present-nav i {
+  font-size: 14px;
+}
+.present-nav:hover:not(:disabled) {
+  box-shadow: var(--blue-inst-shadow-md);
+  transform: translateY(-1px);
+}
+.present-nav:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: none;
 }
 .present-nav:disabled {
-  opacity: 0.5;
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
+/* Botón Confirmar */
 .present-confirm {
   cursor: pointer;
   background: var(--btn-ok-bg);
   border: 1px solid var(--btn-ok-border);
   color: var(--btn-ok-text);
-  padding: 12px 22px;
+  padding: 12px 24px;
   font-weight: 700;
-  border-radius: 14px;
-  min-width: 180px;
+  border-radius: 16px;
+  min-width: 190px;
   font-size: 18px;
+  transition: var(--blue-inst-transition);
+}
+.present-confirm:hover:not(.disabled) {
+  box-shadow: var(--blue-inst-shadow-lg);
+  transform: translateY(-1px);
+}
+.present-confirm:active:not(.disabled) {
+  transform: translateY(1px);
+  box-shadow: none;
 }
 .present-confirm.disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
+/* Botón Cancelar */
 .present-cancel {
   cursor: pointer;
   background: var(--btn-cancel-bg);
   border: 1px solid var(--btn-cancel-border);
   color: var(--btn-cancel-text);
-  padding: 12px 22px;
-  font-weight: 700;
+  padding: 10px 22px;
+  font-weight: 600;
   border-radius: 14px;
-  min-width: 180px;
-  font-size: 18px;
+  min-width: 150px;
+  font-size: 16px;
+  transition: var(--blue-inst-transition);
+}
+.present-cancel:hover {
+  box-shadow: var(--blue-inst-shadow-md);
+  transform: translateY(-1px);
+}
+.present-cancel:active {
+  transform: translateY(1px);
+  box-shadow: none;
 }
 
 /* Aviso sin cupo */
 .present-warning {
-  margin-top: 10px;
+  margin-top: 4px;
   text-align: center;
   color: var(--warn);
+  font-size: 14px;
 }
 
 /* ===== Animaciones ===== */
 @keyframes overlay-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes modal-pop-in {
@@ -379,86 +474,4 @@
     opacity: 1;
     transform: translateY(0) scale(1);
   }
-}
-.present-nav i {
-  font-size: 14px;
-}
-
-.present-nav span {
-  margin: 0 4px;
-}
-.present-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;            /* opcional, para que no quede tan grande */
-  padding: 20px 22px 24px;
-  overflow: auto;
-}
-
-/* El bloque del alumno sigue igual */
-.present-alumno {
-  text-align: center;
-  padding: 8px 0 2px;
-}
-
-/* Fila de botones fija al fondo del modal */
-.present-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  align-items: center;
-  margin-top: auto;     /* 👈 clave: empuja los botones hacia abajo */
-  padding-bottom: 4px;  /* opcional, respirito antes del borde */
-}
-/* ========= BODY ========= */
-.present-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  padding: 20px 22px 24px;
-  overflow: auto;
-}
-
-/* Bloque del alumno CENTRADO vertical y horizontal */
-.present-alumno {
-  flex: 1; /* ocupa el espacio disponible */
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center; /* 👈 centra vertical */
-  text-align: center;
-  padding: 0;
-}
-
-.present-order {
-  opacity: 0.8;
-  margin-bottom: 6px;
-}
-
-.present-name {
-  font-size: 44px;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  line-height: 1.1;
-}
-
-.present-inscripto {
-  margin-top: 10px;
-  display: inline-block;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: var(--chip-bg);
-  border: 1px solid var(--chip-border);
-  font-size: 14px;
-}
-
-/* Fila de botones fija abajo */
-.present-actions {
-  display: flex;
-  gap: 12px;
-  justify-content: center;
-  align-items: center;
-  margin-top: auto;     /* empuja los botones al fondo */
-  padding-bottom: 4px;
 }

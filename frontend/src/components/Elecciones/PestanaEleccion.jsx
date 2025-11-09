@@ -194,12 +194,12 @@ function PestanaEleccionInner({ BASE_URL, fetchJSON, showToast }, ref) {
     irDashboard: () => navigate("/panel"),
   }));
 
-  // Flag para el estado de carga de la tabla (incluye el loading inicial)
-  const tablaLoading = loading || loadingAlumnos;
-
   const materiasNormales = especialidades.filter((e) => !esAusente(e.nombre));
   const ausenteObj = especialidades.find((e) => esAusente(e.nombre));
   const ausenteCount = Number(ausenteObj?.cupos_actuales || 0);
+
+  const tablaLoading = loading || loadingAlumnos;
+  const sinAlumnos = !tablaLoading && alumnos.length === 0;
 
   return (
     <>
@@ -242,7 +242,7 @@ function PestanaEleccionInner({ BASE_URL, fetchJSON, showToast }, ref) {
       </div>
 
       {/* GRID de alumnos */}
-      <div className="grid-wrapper">
+      <div className="grid-wrapper grid-appear">
         {/* Header fijo */}
         <div className="grid-header grid-row">
           <div className="cell col-orden">Orden</div>
@@ -252,20 +252,18 @@ function PestanaEleccionInner({ BASE_URL, fetchJSON, showToast }, ref) {
           <div className="cell col-acc">Acción</div>
         </div>
 
-        {/* Body con alto fijo cuando carga / vacío */}
+        {/* Body con mensaje de cargando dentro de la tabla */}
         <div
           className={
             "grid-body" +
-            (tablaLoading || alumnos.length === 0
-              ? " grid-body-fixed"
-              : "")
+            ((tablaLoading || sinAlumnos) ? " grid-body-fixed" : "")
           }
         >
           {tablaLoading ? (
             <div className="grid-row grid-row-full">
               <div className="cell cell-full">Cargando alumnos…</div>
             </div>
-          ) : alumnos.length === 0 ? (
+          ) : sinAlumnos ? (
             <div className="grid-row grid-row-full">
               <div className="cell cell-full">No hay alumnos cargados.</div>
             </div>

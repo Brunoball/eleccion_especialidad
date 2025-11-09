@@ -753,7 +753,7 @@
 
 /* Cuerpo con scroll interno manteniendo el header fijo dentro de la card */
 .card-body.scroll-y {
-  overflow-y: auto;               /* ocupa todo el espacio disponible */
+  overflow-y: hidden;               /* ocupa todo el espacio disponible */
   -webkit-overflow-scrolling: touch;
 }
 /* =========================
@@ -770,6 +770,7 @@
 }
 
 .modal-appear.in {
+  min-height: 540px;
   opacity: 1;
   transform: translateY(0) scale(1);
   box-shadow: var(--blue-inst-shadow-lg);
@@ -946,4 +947,56 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+/* Transición suave para el botón "Modo Pantalla" */
+.fade-toggle {
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+
+.fade-toggle.fade-in {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.fade-toggle.fade-out {
+  opacity: 0;
+  transform: translateY(-4px); /* leve subida al ocultarse */
+  pointer-events: none;        /* no clickeable cuando está oculto */
+}
+/* Aparición sutil de la tabla de alumnos */
+.grid-appear {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: gridFadeIn 0.32s ease-out forwards;
+}
+
+@keyframes gridFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+/* Aparición sutil de la tabla de RESULTADOS */
+.res-grid-appear {
+  opacity: 0;
+  transform: translateY(8px);
+  animation: resGridFadeIn 0.32s ease-out forwards;
+}
+
+@keyframes resGridFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

@@ -10,10 +10,8 @@ import "./Eleccion.css";
 export default function Eleccion() {
   const navigate = useNavigate();
 
-  // ===== Tabs =====
   const [activeTab, setActiveTab] = useState("eleccion");
 
-  // ===== Toast =====
   const [toast, setToast] = useState(null);
   const toastCtrl = useRef({ timer: null });
 
@@ -42,16 +40,13 @@ export default function Eleccion() {
     setToast((t) => (t && t.id === id ? null : t));
   };
 
-  // ===== fetch helper =====
   const fetchJSON = async (url, opts = {}) => {
     const res = await fetch(url, opts);
     const text = await res.text();
     let data = {};
     try {
       data = text ? JSON.parse(text) : {};
-    } catch (_) {
-      // si no es JSON válido, data queda como {}
-    }
+    } catch (_) {}
     if (!res.ok) {
       const msg = data?.mensaje || data?.error || `HTTP ${res.status}`;
       throw new Error(msg);
@@ -62,7 +57,6 @@ export default function Eleccion() {
     return data;
   };
 
-  // ===== Rol del usuario =====
   const user = useMemo(() => {
     try {
       return JSON.parse(localStorage.getItem("usuario")) || null;
@@ -74,50 +68,49 @@ export default function Eleccion() {
   const role = (user?.rol || "").toLowerCase();
   const isAdmin = role === "admin";
 
-  // ===== Ref al componente hijo (solo Elección) =====
   const eleccionRef = useRef(null);
 
-  // ===== Botones superiores =====
   const abrirModoPantallaDesdeInicio = () => {
     eleccionRef.current?.abrirModoPantallaDesde?.(0);
   };
 
   const volverDashboardIgual = () => {
-    // Si la pestaña Elección está montada y expone irDashboard, usalo
     if (eleccionRef.current?.irDashboard) {
       eleccionRef.current.irDashboard();
       return;
     }
-
-    // Si no hay ref (por ejemplo estás en Resultados),
-    // volvés a la pantalla anterior en lugar de forzar /dashboard
     navigate(-1);
   };
 
-  // ===== Animación de entrada tipo modal =====
   const [mounted, setMounted] = useState(false);
-
   useEffect(() => {
     const t = requestAnimationFrame(() => setMounted(true));
     return () => cancelAnimationFrame(t);
   }, []);
 
-  // ===== Render =====
   return (
     <div className="app-bg">
       <main className="content centered">
-        <div className={`content-card fixed modal-appear ${mounted ? "in" : ""}`}>
+        <div
+          className={`content-card fixed modal-appear ${
+            mounted ? "in" : ""
+          }`}
+        >
           {/* Encabezado con tabs y acciones */}
           <div className="card-head">
             <div className="tabs">
               <button
-                className={`tab ${activeTab === "eleccion" ? "active" : ""}`}
+                className={`tab ${
+                  activeTab === "eleccion" ? "active" : ""
+                }`}
                 onClick={() => setActiveTab("eleccion")}
               >
                 Elección
               </button>
               <button
-                className={`tab ${activeTab === "resultados" ? "active" : ""}`}
+                className={`tab ${
+                  activeTab === "resultados" ? "active" : ""
+                }`}
                 onClick={() => setActiveTab("resultados")}
               >
                 Resultados
@@ -125,15 +118,16 @@ export default function Eleccion() {
             </div>
 
             <div className="card-actions">
-              {activeTab === "eleccion" && (
-                <button
-                  id="btn-modo-pantalla"
-                  className="btn btn-ghost"
-                  onClick={abrirModoPantallaDesdeInicio}
-                >
-                  Modo Pantalla
-                </button>
-              )}
+              {/* Siempre montado, pero con transición según la pestaña */}
+              <button
+                id="btn-modo-pantalla"
+                className={`btn btn-ghost fade-toggle ${
+                  activeTab === "eleccion" ? "fade-in" : "fade-out"
+                }`}
+                onClick={abrirModoPantallaDesdeInicio}
+              >
+                Modo Pantalla
+              </button>
 
               <button
                 id="btn-volver-dashboard"
@@ -147,7 +141,6 @@ export default function Eleccion() {
 
           <h1 className="page-title">Elección de la Especialidad</h1>
 
-          {/* Cuerpo con scroll interno */}
           <div className="card-body scroll-y">
             {activeTab === "eleccion" ? (
               <PestanaEleccion
