@@ -897,7 +897,7 @@
 
 /* Cuerpo scrollable */
 .res-grid-body {
-  max-height: 50vh;          /* ajustá a gusto */
+  max-height: 45vh;          /* ajustá a gusto */
   overflow-y: auto;
 }
 
@@ -1002,8 +1002,7 @@
 }
 .centermar{margin: auto 0;}
 /* Contenedor fijo para estados vacíos / loading dentro del cuerpo de resultados */
-.res-grid-body-fixed { 
-  margin-top: 3rem;        /* mismo alto de la tabla para que se vea centrado */
+.res-grid-body-fixed {       /* mismo alto de la tabla para que se vea centrado */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1066,6 +1065,13 @@
   flex-direction: column;
 
   /* Ocupa todo lo que pueda, sin desfasarse */
-  min-height: 260px;          /* altura mínima linda */
-  max-height: 60vh;           /* no pasa de cierto alto de pantalla */
+  min-height: 50vh;          /* altura mínima linda */         /* no pasa de cierto alto de pantalla */
+}
+/* Contenedor fijo para estados vacíos / loading dentro del cuerpo de resultados */
+.res-grid-body-fixed {
+  min-height: 45vh;          /* igual que max-height de .res-grid-body */
+  width: 100%;
+  display: flex;
+  align-items: center;       /* centra vertical */
+  justify-content: center;   /* centra horizontal */
 }
