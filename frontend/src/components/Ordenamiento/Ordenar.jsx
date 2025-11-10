@@ -1,3 +1,4 @@
+// frontend/src/components/Ordenar/Ordenar.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import BASE_URL from "../../config/config";
@@ -173,7 +174,9 @@ export default function Ordenar() {
         const out = XLSX.write(wb, { bookType: "xlsx", type: "array" });
         downloadBlob(
           new Blob([out], { type: "application/octet-stream" }),
-          `alumnos_ordenamiento_${new Date().toISOString().slice(0, 10)}.xlsx`
+          `alumnos_ordenamiento_${new Date()
+            .toISOString()
+            .slice(0, 10)}.xlsx`
         );
         showToast("exito", "Archivo Excel exportado correctamente.");
         return;
@@ -256,10 +259,7 @@ export default function Ordenar() {
               <span>Criterios</span>
             </button>
 
-            <button
-              onClick={() => setOpenImport(true)}
-              className="org-btn"
-            >
+            <button onClick={() => setOpenImport(true)} className="org-btn">
               <i className="fa-solid fa-file-import" aria-hidden="true" />
               <span>Importar datos</span>
             </button>
@@ -268,7 +268,10 @@ export default function Ordenar() {
               onClick={() => setOpenOrdenar(true)}
               className="org-btn org-btnd-primary"
             >
-              <i className="fa-solid fa-arrow-down-short-wide" aria-hidden="true" />
+              <i
+                className="fa-solid fa-arrow-down-short-wide"
+                aria-hidden="true"
+              />
               <span>Ordenar ranking</span>
             </button>
 
@@ -326,7 +329,7 @@ export default function Ordenar() {
                   </div>
                 )}
 
-                {/* Filas */}
+                {/* Filas o estado vacío */}
                 {rows.length > 0 ? (
                   rows.map((row, idx) => {
                     const crit = resolverCriterio(row) || {};
@@ -346,7 +349,6 @@ export default function Ordenar() {
                       >
                         {columns.map((col) => {
                           const val = raw(row?.[col]);
-                          // Placeholder para fecha_ingreso vacía
                           const display =
                             val || (col === "fecha_ingreso" ? "-" : "");
                           return (
@@ -363,12 +365,16 @@ export default function Ordenar() {
                     );
                   })
                 ) : (
-                  <div
-                    className="org-ordenar-empty-grid"
-                    style={{ gridTemplateColumns: gridTemplate }}
-                  >
-                    No hay datos disponibles. Importá un archivo para ver la
-                    tabla de alumnos.
+                  <div className="org-ordenar-empty-grid">
+                    <i
+                      className="fa-regular fa-circle-xmark org-empty-icon"
+                      aria-hidden="true"
+                    />
+                    <h2>Sin datos</h2>
+                    <p>
+                      No hay registros para mostrar. Importá un archivo
+                      para ver la tabla de alumnos.
+                    </p>
                   </div>
                 )}
               </div>

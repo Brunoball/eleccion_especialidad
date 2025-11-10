@@ -362,3 +362,130 @@
     min-width: 700px;
   }
 }
+.org-ordenar-empty-grid {
+  display: grid;
+  grid-column: 1 / -1;
+  min-height: 100%;
+  padding: 32px 16px;
+  place-items: center;        /* Centra horizontal y vertical */
+  text-align: center;
+  font-size: 13px;
+  color: var(--blue-inst-gray-500);
+  font-style: italic;
+}
+/* Contenedor grid */
+.org-ordenar-grid {
+  min-width: 900px;
+  height: 100%;           /* ocupa todo el alto del scroll */
+  display: flex;
+  flex-direction: column; /* header arriba, contenido abajo */
+}
+
+/* Cabecera columnas (SOLO el header, no la celda) */
+.org-ordenar-grid-header {
+  display: grid;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  align-items: center;
+  background: var(--blue-inst-primary);
+  color: #ffffff;
+  border-bottom: 1px solid var(--blue-inst-primary-dark);
+}
+
+/* Celdas de cabecera */
+.org-ordenar-grid-header-cell {
+  padding: 10px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Estado vacío centrado */
+.org-ordenar-empty-grid {
+  flex: 1 1 auto;                 /* ocupa todo el espacio bajo el header */
+  display: flex;
+  align-items: center;            /* centro vertical */
+  justify-content: center;        /* centro horizontal */
+  padding: 32px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--blue-inst-gray-500);
+  font-style: italic;
+}
+.org-ordenar-grid {
+  min-width: 900px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* header ya separado como antes */
+
+.org-ordenar-empty-grid {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--blue-inst-gray-500);
+  font-style: normal;
+}
+
+.org-empty-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.org-empty-icon i {
+  font-size: 26px;
+  color: var(--blue-inst-primary);
+}
+
+.org-ordenar-empty-grid h2 {
+  margin: 8px 0 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--blue-inst-dark);
+}
+
+.org-ordenar-empty-grid p {
+  margin: 0;
+  font-size: 14px;
+}
+.org-ordenar-empty-grid {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 32px 16px;
+  text-align: center;
+  color: var(--blue-inst-gray-500);
+}
+
+.org-empty-icon {
+  font-size: 40px;
+  color: var(--blue-inst-primary);
+}
+
+.org-ordenar-empty-grid h2 {
+  margin: 8px 0 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--blue-inst-dark);
+}
+
+.org-ordenar-empty-grid p {
+  margin: 0;
+  font-size: 14px;
+}

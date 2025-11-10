@@ -1,3 +1,4 @@
+// frontend/src/components/Eleccion/PestanaResultados.jsx
 import React, { useCallback, useEffect, useState } from "react";
 import "./Eleccion.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
@@ -13,26 +14,35 @@ export default function PestanaResultados({
   const [filtro, setFiltro] = useState("todas");
   const [loading, setLoading] = useState(true);
 
-  const fetchAll = useCallback(async () => {
-    try {
-      setLoading(true);
+  const fetchAll = useCallback(
+    async () => {
+      try {
+        setLoading(true);
 
-      const jElec = await fetchJSON(`${BASE_URL}/api.php?action=obtener_elecciones`);
-      setFilas(jElec?.data || []);
+        const jElec = await fetchJSON(
+          `${BASE_URL}/api.php?action=obtener_elecciones`
+        );
+        setFilas(jElec?.data || []);
 
-      const jList = await fetchJSON(`${BASE_URL}/api.php?action=obtener_listas`);
-      if (Array.isArray(jList?.especialidad)) {
-        setEspecialidades(jList.especialidad);
-      } else {
-        throw new Error(jList?.mensaje || "No se pudieron cargar las especialidades.");
+        const jList = await fetchJSON(
+          `${BASE_URL}/api.php?action=obtener_listas`
+        );
+        if (Array.isArray(jList?.especialidad)) {
+          setEspecialidades(jList.especialidad);
+        } else {
+          throw new Error(
+            jList?.mensaje || "No se pudieron cargar las especialidades."
+          );
+        }
+      } catch (err) {
+        console.error("Error al cargar datos:", err);
+        showToast("error", err.message || "No se pudo cargar la tabla.");
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      console.error("Error al cargar datos:", err);
-      showToast("error", err.message || "No se pudo cargar la tabla.");
-    } finally {
-      setLoading(false);
-    }
-  }, [BASE_URL, fetchJSON, showToast]);
+    },
+    [BASE_URL, fetchJSON, showToast]
+  );
 
   useEffect(() => {
     fetchAll();
@@ -42,7 +52,8 @@ export default function PestanaResultados({
     filtro === "todas"
       ? filas
       : filas.filter(
-          (f) => (f.especialidad || "").toLowerCase() === filtro.toLowerCase()
+          (f) =>
+            (f.especialidad || "").toLowerCase() === filtro.toLowerCase()
         );
 
   const exportarExcel = () => {
@@ -113,7 +124,7 @@ export default function PestanaResultados({
         </div>
       </div>
 
-      {/* Tabla estilo grid */}
+      {/* Tabla estilo grid ocupando todo el alto posible */}
       <div className="res-grid-wrapper res-grid-appear">
         {/* Encabezado */}
         <div className="res-grid-row res-grid-header">
@@ -123,7 +134,7 @@ export default function PestanaResultados({
           <div className="res-grid-cell">Especialidad</div>
         </div>
 
-        {/* Cuerpo */}
+        {/* Cuerpo con scroll interno */}
         <div className="res-grid-body">
           {loading ? (
             <div className="res-grid-body-fixed">
@@ -149,7 +160,9 @@ export default function PestanaResultados({
             visibles.map((f, i) => (
               <div
                 key={f.id_eleccion ?? `${f.dni}-${i}`}
-                className={`res-grid-row ${i % 2 === 0 ? "par" : "impar"}`}
+                className={`res-grid-row ${
+                  i % 2 === 0 ? "par" : "impar"
+                }`}
               >
                 <div className="res-grid-cell">{f.orden}</div>
                 <div className="res-grid-cell">

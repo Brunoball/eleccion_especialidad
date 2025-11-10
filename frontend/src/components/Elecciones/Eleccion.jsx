@@ -6,12 +6,12 @@ import Toast from "../Global/Toast";
 import PestanaEleccion from "./PestanaEleccion";
 import PestanaResultados from "./PestanaResultados";
 import "./Eleccion.css";
+import logoEscuela from "../../imagenes/Escudo.png";
 
 export default function Eleccion() {
   const navigate = useNavigate();
 
   const [activeTab, setActiveTab] = useState("eleccion");
-
   const [toast, setToast] = useState(null);
   const toastCtrl = useRef({ timer: null });
 
@@ -26,7 +26,9 @@ export default function Eleccion() {
     clearToastTimer();
     setToast(null);
     setTimeout(() => {
-      const id = `${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+      const id = `${Date.now()}_${Math.random()
+        .toString(36)
+        .slice(2, 8)}`;
       setToast({ tipo, mensaje, duracion, id });
       toastCtrl.current.timer = setTimeout(() => {
         setToast((t) => (t && t.id === id ? null : t));
@@ -89,16 +91,23 @@ export default function Eleccion() {
   }, []);
 
   return (
-    <div className="app-bg">
-      <main className="content centered">
-        <div
-          className={`content-card fixed modal-appear ${
-            mounted ? "in" : ""
-          }`}
-        >
-          {/* Encabezado con tabs y acciones */}
-          <div className="card-head">
-            <div className="tabs">
+    <div className="eleccion-root">
+      {/* HEADER FULL WIDTH */}
+      <header className="eleccion-header">
+        <div className="header-left">
+          <div className="logo-wrap">
+            <img
+              src={logoEscuela}
+              alt="Logo de la escuela"
+              className="school-logo"
+            />
+          </div>
+
+          <div className="header-text">
+            <h1 className="header-title">Elección de la Especialidad</h1>
+
+            {/* Pestañas estilo navegador debajo del título */}
+            <div className="tabs tabs-under-title">
               <button
                 className={`tab ${
                   activeTab === "eleccion" ? "active" : ""
@@ -117,47 +126,51 @@ export default function Eleccion() {
               </button>
             </div>
 
-            <div className="card-actions">
-              {/* Siempre montado, pero con transición según la pestaña */}
-              <button
-                id="btn-modo-pantalla"
-                className={`btn btn-ghost fade-toggle ${
-                  activeTab === "eleccion" ? "fade-in" : "fade-out"
-                }`}
-                onClick={abrirModoPantallaDesdeInicio}
-              >
-                Modo Pantalla
-              </button>
 
-              <button
-                id="btn-volver-dashboard"
-                className="btn btn-primary"
-                onClick={volverDashboardIgual}
-              >
-                Volver
-              </button>
-            </div>
           </div>
+        </div>
 
-          <h1 className="page-title">Elección de la Especialidad</h1>
+        <div className="header-right">
+          <div className="cards-actions">
+            <button
+              id="btn-modo-pantalla"
+              className={`btn btn-ghost fade-toggle ${
+                activeTab === "eleccion" ? "fade-in" : "fade-out"
+              }`}
+              onClick={abrirModoPantallaDesdeInicio}
+            >
+              Modo Pantalla
+            </button>
 
-          <div className="card-body scroll-y centermar">
-            {activeTab === "eleccion" ? (
-              <PestanaEleccion
-                ref={eleccionRef}
-                BASE_URL={BASE_URL}
-                fetchJSON={fetchJSON}
-                showToast={showToast}
-              />
-            ) : (
-              <PestanaResultados
-                BASE_URL={BASE_URL}
-                fetchJSON={fetchJSON}
-                showToast={showToast}
-                isAdmin={isAdmin}
-              />
-            )}
+            <button
+              id="btn-volver-dashboard"
+              className="btn btn-primary"
+              onClick={volverDashboardIgual}
+            >
+              Volver
+            </button>
           </div>
+        </div>
+      </header>
+
+      {/* MAIN FULL HEIGHT */}
+      <main className={`eleccion-main modal-appear ${mounted ? "in" : ""}`}>
+        <div className="eleccion-content">
+          {activeTab === "eleccion" ? (
+            <PestanaEleccion
+              ref={eleccionRef}
+              BASE_URL={BASE_URL}
+              fetchJSON={fetchJSON}
+              showToast={showToast}
+            />
+          ) : (
+            <PestanaResultados
+              BASE_URL={BASE_URL}
+              fetchJSON={fetchJSON}
+              showToast={showToast}
+              isAdmin={isAdmin}
+            />
+          )}
         </div>
       </main>
 

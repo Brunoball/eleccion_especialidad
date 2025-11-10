@@ -8,6 +8,7 @@ import React, {
 import { useNavigate } from "react-router-dom";
 import ModalPantalla from "./modales/ModalPantalla";
 import "./Eleccion.css";
+import "@fortawesome/fontawesome-free/css/all.min.css";
 
 function PestanaEleccionInner({ BASE_URL, fetchJSON, showToast }, ref) {
   const navigate = useNavigate();
@@ -55,23 +56,22 @@ function PestanaEleccionInner({ BASE_URL, fetchJSON, showToast }, ref) {
   const cargarAlumnos = async () => {
     setLoadingAlumnos(true);
     try {
-      // ✅ ahora consume el endpoint que respeta el ORDEN
       const { data: rows } = await fetchJSON(
         `${BASE_URL}/api.php?action=eleccion_alumnos`
       );
 
       const norm = (rows || []).map((r) => {
-        const idEsp = r.id_especialidad == null ? null : Number(r.id_especialidad);
+        const idEsp =
+          r.id_especialidad == null ? null : Number(r.id_especialidad);
         return {
           id_alumno: Number(r.id_alumno),
           alumno: String(r.alumno ?? "").toUpperCase(),
           orden: r.orden == null ? null : Number(r.orden),
           id_especialidad: idEsp,
-          // Nombre calculado desde la lista de especialidades actual
           especialidad: getNombreEspecialidad(idEsp),
           confirmado: Boolean(r.confirmado ?? false),
 
-          // Campos no provistos por este endpoint (se dejan por compatibilidad)
+          // Campos legacy reservados
           dni: "",
           promedio_final: null,
           previas_1et: 0,
@@ -90,7 +90,7 @@ function PestanaEleccionInner({ BASE_URL, fetchJSON, showToast }, ref) {
         };
       });
 
-      // Fallback local (por si acaso) — los con orden primero, luego id_alumno
+      // Fallback local
       norm.sort((a, b) => {
         const ao = a.orden ?? Number.POSITIVE_INFINITY;
         const bo = b.orden ?? Number.POSITIVE_INFINITY;
@@ -249,7 +249,7 @@ function PestanaEleccionInner({ BASE_URL, fetchJSON, showToast }, ref) {
           className="ausente-pill"
           title="Registro de AUSENTES (no consume cupo)"
         >
-          <span className="pill-label">AUSENTE</span>
+          <span className="pill-label">AUSENTES</span>
           <span className="pill-count">{ausenteCount}</span>
         </div>
       </div>
@@ -258,14 +258,14 @@ function PestanaEleccionInner({ BASE_URL, fetchJSON, showToast }, ref) {
       <div className="grid-wrapper grid-appear">
         {/* Header fijo */}
         <div className="grid-header grid-row">
-          <div className="cell col-orden">Orden</div>
-          <div className="cell col-alumno">Alumno</div>
-          <div className="cell col-insc">Inscripción</div>
-          <div className="cell col-esp">Especialidad</div>
-          <div className="cell col-acc">Acción</div>
+          <div className="cell col-orden">ORDEN</div>
+          <div className="cell col-alumno">ALUMNO</div>
+          <div className="cell col-insc">INSCRIPCIÓN</div>
+          <div className="cell col-esp">ESPECIALIDAD</div>
+          <div className="cell col-acc">ACCIÓN</div>
         </div>
 
-        {/* Body con mensaje de cargando dentro de la tabla */}
+        {/* Body con mensaje centrado tipo "sin resultados" */}
         <div
           className={
             "grid-body" +
@@ -273,12 +273,20 @@ function PestanaEleccionInner({ BASE_URL, fetchJSON, showToast }, ref) {
           }
         >
           {tablaLoading ? (
-            <div className="grid-row grid-row-full">
-              <div className="cell cell-full">Cargando alumnos…</div>
+            <div className="grid-empty">
+              <div className="grid-empty-icon grid-empty-spinner" />
+              <div className="grid-empty-title">Cargando alumnos</div>
+              <div className="grid-empty-sub">
+                Obteniendo el listado, por favor esperá…
+              </div>
             </div>
           ) : sinAlumnos ? (
-            <div className="grid-row grid-row-full">
-              <div className="cell cell-full">No hay alumnos cargados.</div>
+            <div className="grid-empty">
+              <i className="fa-regular fa-circle-xmark res-empty-icon" />
+              <div className="grid-empty-title">Sin alumnos cargados</div>
+              <div className="grid-empty-sub">
+                No hay registros para mostrar con la configuración actual.
+              </div>
             </div>
           ) : (
             alumnos.map((row, idx) => {
@@ -302,9 +310,8 @@ function PestanaEleccionInner({ BASE_URL, fetchJSON, showToast }, ref) {
 
               const stripeClass = idx % 2 === 0 ? "row-impar" : "row-par";
 
-              // Nombre a mostrar en la columna "Inscripción"
               const nombreInscripcion = inscripto
-                ? (getNombreEspecialidad(row.id_especialidad) || "Inscripto")
+                ? getNombreEspecialidad(row.id_especialidad) || "Inscripto"
                 : null;
 
               const esAusenteTag =
@@ -334,7 +341,8 @@ function PestanaEleccionInner({ BASE_URL, fetchJSON, showToast }, ref) {
                     {inscripto ? (
                       <span
                         className={
-                          "tag-insc " + (esAusenteTag ? "tag-ausente" : "tag-ok")
+                          "tag-insc " +
+                          (esAusenteTag ? "tag-ausente" : "tag-ok")
                         }
                       >
                         {nombreInscripcion}
