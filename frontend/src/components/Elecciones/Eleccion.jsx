@@ -141,7 +141,7 @@ export default function Eleccion() {
 
           <h1 className="page-title">Elección de la Especialidad</h1>
 
-          <div className="card-body scroll-y">
+          <div className="card-body scroll-y centermar">
             {activeTab === "eleccion" ? (
               <PestanaEleccion
                 ref={eleccionRef}

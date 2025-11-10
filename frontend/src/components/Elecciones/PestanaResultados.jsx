@@ -1,12 +1,13 @@
 // frontend/src/components/Eleccion/PestanaResultados.jsx
 import React, { useCallback, useEffect, useState } from "react";
 import "./Eleccion.css";
+import "@fortawesome/fontawesome-free/css/all.min.css"; // si ya lo tenés global, podés quitar esta línea
 
 export default function PestanaResultados({
   BASE_URL,
   fetchJSON,
   showToast,
-  isAdmin, // por si lo usás después
+  isAdmin, // reservado por si lo usás después
 }) {
   const [filas, setFilas] = useState([]);
   const [especialidades, setEspecialidades] = useState([]);
@@ -96,7 +97,7 @@ export default function PestanaResultados({
 
   return (
     <div className="res-wrapper">
-      {/* Filtros + Acciones */}
+      {/* Barra de filtro + botón exportar */}
       <div className="res-toolbar">
         <select
           value={filtro}
@@ -113,14 +114,15 @@ export default function PestanaResultados({
 
         <div className="res-actions">
           <button onClick={exportarExcel} className="res-btn-export">
-            Exportar a Excel
+            <i className="fa-solid fa-file-export" aria-hidden="true" />
+            &nbsp;Exportar a Excel
           </button>
         </div>
       </div>
 
-      {/* Tabla estilo grid con header fijo y cuerpo scrolleable */}
-      <div className={"res-grid-wrapper res-grid-appear"}>
-        {/* Encabezados */}
+      {/* Tabla estilo grid con animación + contenido centrado en vacío/loading */}
+      <div className="res-grid-wrapper res-grid-appear">
+        {/* Encabezado */}
         <div className="res-grid-row res-grid-header">
           <div className="res-grid-cell">Orden</div>
           <div className="res-grid-cell">Alumno</div>
@@ -128,21 +130,32 @@ export default function PestanaResultados({
           <div className="res-grid-cell">Especialidad</div>
         </div>
 
-        {/* Cuerpo: mensaje dentro de la propia tabla */}
+        {/* Cuerpo */}
         <div className="res-grid-body">
           {loading ? (
-            <div className="res-grid-row grid-row-full">
-              <div className="res-grid-cell cell-full">
-                Cargando resultados…
+            // Estado: cargando
+            <div className="res-grid-body-fixed">
+              <div className="res-empty">
+                <span className="res-empty-spinner" />
+                <div className="res-empty-text">Cargando resultados…</div>
               </div>
             </div>
           ) : visibles.length === 0 ? (
-            <div className="res-grid-row grid-row-full">
-              <div className="res-grid-cell cell-full">
-                No hay registros para mostrar.
+            // Estado: sin resultados
+            <div className="res-grid-body-fixed">
+              <div className="res-empty">
+                <i
+                  className="fa-regular fa-circle-xmark res-empty-icon"
+                  aria-hidden="true"
+                />
+                <div className="res-empty-title">Sin resultados</div>
+                <div className="res-empty-sub">
+                  No hay registros para mostrar con el filtro actual.
+                </div>
               </div>
             </div>
           ) : (
+            // Filas
             visibles.map((f, i) => (
               <div
                 key={f.id_eleccion ?? `${f.dni}-${i}`}

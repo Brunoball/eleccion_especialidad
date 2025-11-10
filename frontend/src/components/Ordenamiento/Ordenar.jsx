@@ -59,6 +59,7 @@ export default function Ordenar() {
     try {
       const j = await fetchJSON(`${API}?action=ordenar_obtener_tabla`);
       const arr = Array.isArray(j?.data) ? j.data : [];
+
       const cols =
         Array.isArray(j?.columns) && j.columns.length
           ? j.columns
@@ -96,13 +97,13 @@ export default function Ordenar() {
     return String(v);
   };
 
-  // Template de columnas para el grid
+  // Template columnas grid
   const gridTemplate = useMemo(() => {
     if (!columns.length) return "1fr";
     return `repeat(${columns.length}, minmax(120px, 1fr))`;
   }, [columns]);
 
-  // ====== EXPORTACIÓN (usa el orden actual) ======
+  // ====== EXPORTACIÓN ======
   const downloadBlob = (blob, filename) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -172,9 +173,7 @@ export default function Ordenar() {
         const out = XLSX.write(wb, { bookType: "xlsx", type: "array" });
         downloadBlob(
           new Blob([out], { type: "application/octet-stream" }),
-          `alumnos_ordenamiento_${new Date()
-            .toISOString()
-            .slice(0, 10)}.xlsx`
+          `alumnos_ordenamiento_${new Date().toISOString().slice(0, 10)}.xlsx`
         );
         showToast("exito", "Archivo Excel exportado correctamente.");
         return;
@@ -233,8 +232,8 @@ export default function Ordenar() {
             <div className="org-ordenar-header-text">
               <h1>Ordenamiento de alumnos</h1>
               <p>
-                Vista de ordenamiento de alumnos según criterios definidos por el
-                equipo directivo.
+                Vista de ordenamiento de alumnos según criterios definidos por
+                el equipo directivo.
               </p>
             </div>
 
@@ -269,10 +268,7 @@ export default function Ordenar() {
               onClick={() => setOpenOrdenar(true)}
               className="org-btn org-btnd-primary"
             >
-              <i
-                className="fa-solid fa-arrow-down-short-wide"
-                aria-hidden="true"
-              />
+              <i className="fa-solid fa-arrow-down-short-wide" aria-hidden="true" />
               <span>Ordenar ranking</span>
             </button>
 
@@ -348,15 +344,21 @@ export default function Ordenar() {
                           ...(crit.color ? { "--row-bg": crit.color } : {}),
                         }}
                       >
-                        {columns.map((col) => (
-                          <div
-                            key={col}
-                            className="org-ordenar-grid-cell"
-                            title={raw(row?.[col])}
-                          >
-                            {raw(row?.[col])}
-                          </div>
-                        ))}
+                        {columns.map((col) => {
+                          const val = raw(row?.[col]);
+                          // Placeholder para fecha_ingreso vacía
+                          const display =
+                            val || (col === "fecha_ingreso" ? "-" : "");
+                          return (
+                            <div
+                              key={col}
+                              className="org-ordenar-grid-cell"
+                              title={display}
+                            >
+                              {display}
+                            </div>
+                          );
+                        })}
                       </div>
                     );
                   })
