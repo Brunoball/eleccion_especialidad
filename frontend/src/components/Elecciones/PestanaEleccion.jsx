@@ -25,6 +25,12 @@ function PestanaEleccionInner({ BASE_URL, fetchJSON, showToast }, ref) {
     typeof nombre === "string" &&
     nombre.trim().toUpperCase() === "AUSENTE";
 
+  const getNombreEspecialidad = (id) => {
+    if (id == null) return null;
+    const esp = especialidades.find((e) => e.id === Number(id));
+    return esp ? esp.nombre : null;
+  };
+
   const cargarCupos = async () => {
     try {
       const { especialidades: esp } = await fetchJSON(
@@ -49,40 +55,47 @@ function PestanaEleccionInner({ BASE_URL, fetchJSON, showToast }, ref) {
   const cargarAlumnos = async () => {
     setLoadingAlumnos(true);
     try {
-      const { alumnos: rows } = await fetchJSON(
-        `${BASE_URL}/api.php?action=obtener_alumnos&order=alumno&dir=ASC&limit=10000`
+      // ✅ ahora consume el endpoint que respeta el ORDEN
+      const { data: rows } = await fetchJSON(
+        `${BASE_URL}/api.php?action=eleccion_alumnos`
       );
 
-      const norm = (rows || []).map((r) => ({
-        id_alumno: Number(r.id_alumno),
-        dni: String(r.dni ?? ""),
-        alumno: String(r.alumno ?? "").toUpperCase(),
-        promedio_final:
-          r.promedio_final == null ? null : Number(r.promedio_final),
-        previas_1et: Number(r.previas_1et ?? 0),
-        adeudadas_1et: Number(r.adeudadas_1et ?? 0),
-        coloquios_1a: Number(r.coloquios_1a ?? 0),
-        repite_1a: String(r.repite_1a ?? "no"),
-        repite_2a: Number(r.repite_2a ?? 0),
-        amonestaciones_1a: Number(r.amonestaciones_1a ?? 0),
-        amonestaciones_2a: Number(r.amonestaciones_2a ?? 0),
-        inasistencias_1et: Number(r.inasistencias_1et ?? 0),
-        inasistencias_1a: Number(r.inasistencias_1a ?? 0),
-        observaciones_1a: r.observaciones_1a ?? null,
-        observaciones_2a: r.observaciones_2a ?? null,
-        sin_trayectoria: Number(r.sin_trayectoria ?? 0),
-        tercera_materia: Number(r.tercera_materia ?? 0),
-        id_especialidad:
-          r.id_especialidad === null ? null : Number(r.id_especialidad),
-        especialidad: r.especialidad ?? null,
-        orden: r.orden == null ? null : Number(r.orden),
-      }));
+      const norm = (rows || []).map((r) => {
+        const idEsp = r.id_especialidad == null ? null : Number(r.id_especialidad);
+        return {
+          id_alumno: Number(r.id_alumno),
+          alumno: String(r.alumno ?? "").toUpperCase(),
+          orden: r.orden == null ? null : Number(r.orden),
+          id_especialidad: idEsp,
+          // Nombre calculado desde la lista de especialidades actual
+          especialidad: getNombreEspecialidad(idEsp),
+          confirmado: Boolean(r.confirmado ?? false),
 
+          // Campos no provistos por este endpoint (se dejan por compatibilidad)
+          dni: "",
+          promedio_final: null,
+          previas_1et: 0,
+          adeudadas_1et: 0,
+          coloquios_1a: 0,
+          repite_1a: "no",
+          repite_2a: 0,
+          amonestaciones_1a: 0,
+          amonestaciones_2a: 0,
+          inasistencias_1et: 0,
+          inasistencias_1a: 0,
+          observaciones_1a: null,
+          observaciones_2a: null,
+          sin_trayectoria: 0,
+          tercera_materia: 0,
+        };
+      });
+
+      // Fallback local (por si acaso) — los con orden primero, luego id_alumno
       norm.sort((a, b) => {
         const ao = a.orden ?? Number.POSITIVE_INFINITY;
         const bo = b.orden ?? Number.POSITIVE_INFINITY;
         if (ao !== bo) return ao - bo;
-        return a.alumno.localeCompare(b.alumno);
+        return a.id_alumno - b.id_alumno;
       });
 
       setAlumnos(norm);
@@ -289,6 +302,14 @@ function PestanaEleccionInner({ BASE_URL, fetchJSON, showToast }, ref) {
 
               const stripeClass = idx % 2 === 0 ? "row-impar" : "row-par";
 
+              // Nombre a mostrar en la columna "Inscripción"
+              const nombreInscripcion = inscripto
+                ? (getNombreEspecialidad(row.id_especialidad) || "Inscripto")
+                : null;
+
+              const esAusenteTag =
+                nombreInscripcion && esAusente(nombreInscripcion);
+
               return (
                 <div
                   key={row.id_alumno}
@@ -313,14 +334,10 @@ function PestanaEleccionInner({ BASE_URL, fetchJSON, showToast }, ref) {
                     {inscripto ? (
                       <span
                         className={
-                          "tag-insc " +
-                          (row.especialidad &&
-                          esAusente(row.especialidad)
-                            ? "tag-ausente"
-                            : "tag-ok")
+                          "tag-insc " + (esAusenteTag ? "tag-ausente" : "tag-ok")
                         }
                       >
-                        {row.especialidad || "Inscripto"}
+                        {nombreInscripcion}
                       </span>
                     ) : (
                       <span className="tag-insc tag-pendiente">

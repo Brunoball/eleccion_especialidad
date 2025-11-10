@@ -1,49 +1,38 @@
-// frontend/src/components/Eleccion/PestanaResultados.jsx
 import React, { useCallback, useEffect, useState } from "react";
 import "./Eleccion.css";
-import "@fortawesome/fontawesome-free/css/all.min.css"; // si ya lo tenés global, podés quitar esta línea
+import "@fortawesome/fontawesome-free/css/all.min.css";
 
 export default function PestanaResultados({
   BASE_URL,
   fetchJSON,
   showToast,
-  isAdmin, // reservado por si lo usás después
+  isAdmin,
 }) {
   const [filas, setFilas] = useState([]);
   const [especialidades, setEspecialidades] = useState([]);
   const [filtro, setFiltro] = useState("todas");
   const [loading, setLoading] = useState(true);
 
-  const fetchAll = useCallback(
-    async () => {
-      try {
-        setLoading(true);
+  const fetchAll = useCallback(async () => {
+    try {
+      setLoading(true);
 
-        const jElec = await fetchJSON(
-          `${BASE_URL}/api.php?action=obtener_elecciones`
-        );
-        setFilas(jElec?.data || []);
+      const jElec = await fetchJSON(`${BASE_URL}/api.php?action=obtener_elecciones`);
+      setFilas(jElec?.data || []);
 
-        const jList = await fetchJSON(
-          `${BASE_URL}/api.php?action=obtener_listas`
-        );
-
-        if (Array.isArray(jList?.especialidad)) {
-          setEspecialidades(jList.especialidad);
-        } else {
-          throw new Error(
-            jList?.mensaje || "No se pudieron cargar las especialidades."
-          );
-        }
-      } catch (err) {
-        console.error("Error al cargar datos:", err);
-        showToast("error", err.message || "No se pudo cargar la tabla.");
-      } finally {
-        setLoading(false);
+      const jList = await fetchJSON(`${BASE_URL}/api.php?action=obtener_listas`);
+      if (Array.isArray(jList?.especialidad)) {
+        setEspecialidades(jList.especialidad);
+      } else {
+        throw new Error(jList?.mensaje || "No se pudieron cargar las especialidades.");
       }
-    },
-    [BASE_URL, fetchJSON, showToast]
-  );
+    } catch (err) {
+      console.error("Error al cargar datos:", err);
+      showToast("error", err.message || "No se pudo cargar la tabla.");
+    } finally {
+      setLoading(false);
+    }
+  }, [BASE_URL, fetchJSON, showToast]);
 
   useEffect(() => {
     fetchAll();
@@ -53,12 +42,16 @@ export default function PestanaResultados({
     filtro === "todas"
       ? filas
       : filas.filter(
-          (f) =>
-            (f.especialidad || "").toLowerCase() === filtro.toLowerCase()
+          (f) => (f.especialidad || "").toLowerCase() === filtro.toLowerCase()
         );
 
   const exportarExcel = () => {
     try {
+      if (!visibles.length) {
+        showToast("error", "No hay datos para exportar.");
+        return;
+      }
+
       const SEP = ";";
       const quote = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
       const header = ["Orden", "Alumno", "DNI", "Especialidad"];
@@ -120,7 +113,7 @@ export default function PestanaResultados({
         </div>
       </div>
 
-      {/* Tabla estilo grid con animación + contenido centrado en vacío/loading */}
+      {/* Tabla estilo grid */}
       <div className="res-grid-wrapper res-grid-appear">
         {/* Encabezado */}
         <div className="res-grid-row res-grid-header">
@@ -133,7 +126,6 @@ export default function PestanaResultados({
         {/* Cuerpo */}
         <div className="res-grid-body">
           {loading ? (
-            // Estado: cargando
             <div className="res-grid-body-fixed">
               <div className="res-empty">
                 <span className="res-empty-spinner" />
@@ -141,7 +133,6 @@ export default function PestanaResultados({
               </div>
             </div>
           ) : visibles.length === 0 ? (
-            // Estado: sin resultados
             <div className="res-grid-body-fixed">
               <div className="res-empty">
                 <i
@@ -155,7 +146,6 @@ export default function PestanaResultados({
               </div>
             </div>
           ) : (
-            // Filas
             visibles.map((f, i) => (
               <div
                 key={f.id_eleccion ?? `${f.dni}-${i}`}
