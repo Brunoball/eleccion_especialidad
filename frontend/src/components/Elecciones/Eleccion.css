@@ -270,6 +270,7 @@
 }
 
 .grid-header {
+  min-height: max-content;
   position: sticky;
   top: 0;
   z-index: 5;
@@ -980,3 +981,37 @@
   padding: 24px 12px;
   color: var(--blue-inst-gray-600);
 }
+/* =====================================
+   FIX SCROLL TABLA ELECCIÓN (OVERRIDE)
+   ===================================== */
+
+/* Que el wrapper tenga ALTO MÁXIMO y no solo min-height */
+.grid-wrapper {
+  display: flex;
+  flex-direction: column;
+  /* anula el min-height anterior si quedó */
+  min-height: auto;
+  max-height: calc(100vh - 260px); /* ajustá este valor si hace falta */
+}
+
+/* Header fijo dentro del wrapper */
+.grid-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+}
+
+/* El body ocupa el resto y scrollea */
+.grid-body {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Cuando es loading / sin alumnos, centrado */
+.grid-body-fixed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.acciones{display: flex; gap: 10px;}
