@@ -156,6 +156,8 @@ const ModalOrdenar = ({ open, onClose, onApplied }) => {
                     <th>DNI</th>
                     <th>Trayectoria</th>
                     <th>Prom. Final</th>
+                    {/* NUEVO: Prom. 1° Año */}
+                    <th>Prom. 1° Año</th>
                     <th>Prom. 1° Etapa</th>
                     <th>Adeud. 1° Etapa</th>
                     <th>Previas 1° Etapa</th>
@@ -181,6 +183,8 @@ const ModalOrdenar = ({ open, onClose, onApplied }) => {
                           : "Con tray."}
                       </td>
                       <td>{Number(r.promedio_final ?? 0).toFixed(2)}</td>
+                      {/* NUEVO: Prom. 1° Año */}
+                      <td>{Number(r.promedio_1a ?? 0).toFixed(2)}</td>
                       <td>{Number(r.promedio_1et ?? 0).toFixed(2)}</td>
                       <td>{r.adeudadas_1et}</td>
                       <td>{r.previas_1et}</td>
@@ -201,7 +205,8 @@ const ModalOrdenar = ({ open, onClose, onApplied }) => {
 
                   {preview.length === 0 && !error && (
                     <tr>
-                      <td colSpan={16} className="ord-empty">
+                      {/* ahora hay 17 columnas */}
+                      <td colSpan={17} className="ord-empty">
                         Sin datos para mostrar.
                       </td>
                     </tr>

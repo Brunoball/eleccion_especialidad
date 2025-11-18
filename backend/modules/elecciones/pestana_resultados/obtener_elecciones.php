@@ -2,7 +2,7 @@
 // backend/modules/tabla_eleccion/obtener_elecciones.php
 declare(strict_types=1);
 
-require_once __DIR__ . '/../../../config/db.php'; 
+require_once __DIR__ . '/../../../config/db.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
@@ -22,7 +22,17 @@ try {
   $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
   $pdo->exec("SET NAMES utf8mb4");
 
-  // ✅ SIN prefijo de base: solo nombres de tabla
+  // Filtro opcional por id_eleccion
+  $idEleccion = null;
+  if (isset($_GET['id_eleccion']) && $_GET['id_eleccion'] !== '') {
+    $idTmp = filter_var($_GET['id_eleccion'], FILTER_VALIDATE_INT);
+    if ($idTmp === false || $idTmp <= 0) {
+      throw new InvalidArgumentException('Parámetro id_eleccion inválido.');
+    }
+    $idEleccion = $idTmp;
+  }
+
+  // SELECT
   $sql = "
     SELECT
       e.id_eleccion      AS id_eleccion,
@@ -36,16 +46,28 @@ try {
         ON a.id_alumno = e.id_alumno
       INNER JOIN `especialidad` s
         ON s.id_especialidad = e.id_especialidad
-    ORDER BY e.id_eleccion ASC
   ";
 
-  $stmt = $pdo->query($sql);
+  if ($idEleccion !== null) {
+    $sql .= " WHERE e.id_eleccion = :id_eleccion ";
+  }
+
+  // ORDENAR POR EL id_eleccion
+  $sql .= " ORDER BY e.id_eleccion ASC ";
+
+  $stmt = $pdo->prepare($sql);
+
+  if ($idEleccion !== null) {
+    $stmt->bindValue(':id_eleccion', $idEleccion, PDO::PARAM_INT);
+  }
+
+  $stmt->execute();
 
   $data = [];
-  $orden = 1;
   while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    // 👉 ORDEN = id_eleccion (lo que querías)
     $data[] = [
-      'orden'           => $orden++,
+      'orden'           => (int)$row['id_eleccion'],
       'id_eleccion'     => (int)$row['id_eleccion'],
       'id_alumno'       => (int)$row['id_alumno'],
       'id_especialidad' => (int)$row['id_especialidad'],

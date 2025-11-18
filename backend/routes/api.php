@@ -82,6 +82,10 @@ try {
       require_once __DIR__ . '/../modules/elecciones/pestana_resultados/obtener_elecciones.php';
       exit;
 
+    case 'eleccion_resetear':
+      require_once __DIR__ . '/../modules/elecciones/pestana_resultados/eleccion_resetear.php';
+      exit;
+
     /* ===========================
        ORDENAR (import / ranking / reset / tabla)
     ============================ */

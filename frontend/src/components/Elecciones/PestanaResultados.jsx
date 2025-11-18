@@ -2,6 +2,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import "./Eleccion.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
+import ModalReset from "./modales/ModalReset";
 
 export default function PestanaResultados({
   BASE_URL,
@@ -13,6 +14,10 @@ export default function PestanaResultados({
   const [especialidades, setEspecialidades] = useState([]);
   const [filtro, setFiltro] = useState("todas");
   const [loading, setLoading] = useState(true);
+
+  // NUEVO: estado para el modal de reseteo
+  const [openReset, setOpenReset] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
 
   const fetchAll = useCallback(
     async () => {
@@ -99,9 +104,38 @@ export default function PestanaResultados({
     }
   };
 
+  // NUEVO: confirmación de reseteo
+  const confirmarReset = async () => {
+    try {
+      setResetLoading(true);
+
+      await fetchJSON(`${BASE_URL}/api.php?action=eleccion_resetear`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}), // por si querés enviar algo luego
+      });
+
+      showToast(
+        "exito",
+        "Se resetearon todas las inscripciones de especialidad."
+      );
+
+      setOpenReset(false);
+      await fetchAll(); // recargar tabla (quedará vacía)
+    } catch (err) {
+      console.error("Error al resetear elecciones:", err);
+      showToast(
+        "error",
+        err.message || "No se pudo resetear la elección de especialidad."
+      );
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
   return (
     <div className="res-wrapper">
-      {/* Barra de filtro + botón exportar */}
+      {/* Barra de filtro + botones de acciones */}
       <div className="res-toolbar">
         <select
           value={filtro}
@@ -120,6 +154,16 @@ export default function PestanaResultados({
           <button onClick={exportarExcel} className="res-btn-export">
             <i className="fa-solid fa-file-export" aria-hidden="true" />
             &nbsp;Exportar a Excel
+          </button>
+
+          {/* NUEVO BOTÓN RESET */}
+          <button
+            type="button"
+            className="res-btn-reset"
+            onClick={() => setOpenReset(true)}
+          >
+            <i className="fa-solid fa-rotate-left" aria-hidden="true" />
+            &nbsp;Resetear elección
           </button>
         </div>
       </div>
@@ -160,9 +204,7 @@ export default function PestanaResultados({
             visibles.map((f, i) => (
               <div
                 key={f.id_eleccion ?? `${f.dni}-${i}`}
-                className={`res-grid-row ${
-                  i % 2 === 0 ? "par" : "impar"
-                }`}
+                className={`res-grid-row ${i % 2 === 0 ? "par" : "impar"}`}
               >
                 <div className="res-grid-cell">{f.orden}</div>
                 <div className="res-grid-cell">
@@ -175,6 +217,14 @@ export default function PestanaResultados({
           )}
         </div>
       </div>
+
+      {/* MODAL RESET */}
+      <ModalReset
+        open={openReset}
+        onClose={() => !resetLoading && setOpenReset(false)}
+        onConfirm={confirmarReset}
+        loading={resetLoading}
+      />
     </div>
   );
 }

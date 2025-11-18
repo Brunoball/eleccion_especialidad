@@ -16,8 +16,6 @@ if (!isset($pdo) || !($pdo instanceof PDO)) {
 
 try { $pdo->exec("SET NAMES utf8mb4"); } catch (\Throwable $e) {}
 
-const DB_SCHEMA = 'eleccion_especialidad';
-
 /* ---------- Helpers ---------- */
 function ok($data = [], int $code = 200): void {
   http_response_code($code);
@@ -92,12 +90,12 @@ $rows = $js['rows'] ?? null;
 if (!is_array($rows) || !$rows) fail('Falta "rows" (array)', 400);
 
 /*
-Tabla: eleccion_especialidad.alumnos
+Tabla: alumnos
 - dni BIGINT UNSIGNED NULL UNIQUE (permite múltiples NULL).
 - Requisito: ALUMNO no vacío.
 */
 
-$sql = "INSERT INTO `".DB_SCHEMA."`.`alumnos`
+$sql = "INSERT INTO `alumnos`
   (dni, alumno,
    promedio_1a, coloquios_1a, repite_1a, inasistencias_1a, amonestaciones_1a, observaciones_1a,
    promedio_1et, adeudadas_1et, tercera_materia, previas_1et, repite_2a, inasistencias_1et, amonestaciones_1et, observaciones_1et,
@@ -184,7 +182,8 @@ try {
       else               $sinCambios++;
     } catch (\PDOException $e) {
       if ((int)($e->errorInfo[1] ?? 0) === 1062) {
-        $sinCambios++; // UNIQUE(dni) sin cambios
+        // UNIQUE(dni) colisionó pero sin cambios efectivos (p. ej., DNI NULL o valores iguales)
+        $sinCambios++;
       } else {
         $errores[] = "Fila ".($i+1).": ".$e->getMessage();
       }
@@ -201,7 +200,7 @@ try {
 
 // Métrica de control
 try {
-  $totalTabla = (int)$pdo->query("SELECT COUNT(*) FROM `".DB_SCHEMA."`.`alumnos`")->fetchColumn();
+  $totalTabla = (int)$pdo->query("SELECT COUNT(*) FROM `alumnos`")->fetchColumn();
 } catch (\Throwable $e) {
   $totalTabla = null;
 }

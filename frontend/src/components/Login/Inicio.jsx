@@ -24,6 +24,13 @@ function decodeJwtPayload(token) {
   }
 }
 
+function normalizeRol(value) {
+  if (value == null) return 'vista';
+  const v = String(value).trim().toLowerCase();
+  if (v === '1' || v === 'admin' || v === 'administrator' || v === 'administrador' || v === 'superadmin') return 'admin';
+  return 'vista';
+}
+
 const Inicio = () => {
   const [nombre, setNombre] = useState('');
   const [contrasena, setContrasena] = useState('');
@@ -87,7 +94,6 @@ const Inicio = () => {
         body: JSON.stringify({ nombre, contrasena }),
       });
 
-      // Si quedara algún 401 por atrás, no “tiramos” error: solo UI
       if (res.status === 401) {
         let d = null; try { d = await res.json(); } catch {}
         mostrarToast('error', d?.mensaje || 'Usuario o contraseña incorrectos');
@@ -95,7 +101,6 @@ const Inicio = () => {
         return;
       }
 
-      // Para mantener la consola limpia: nunca throw.
       if (!res.ok) {
         mostrarToast('error', 'No se pudo iniciar sesión. Intente nuevamente.');
         setCargando(false);
@@ -105,42 +110,37 @@ const Inicio = () => {
       let data = null;
       try { data = await res.json(); } catch {}
 
-      if (!data) {
-        mostrarToast('error', 'Respuesta inválida del servidor.');
+      if (!data || !data.exito) {
+        mostrarToast('error', data?.mensaje || 'Usuario o contraseña incorrectos');
         setCargando(false);
         return;
       }
 
-      if (!data.exito) {
-        mostrarToast('error', data.mensaje || 'Usuario o contraseña incorrectos');
-        setCargando(false);
-        return;
-      }
-
-      // Login OK
       const token = data.token;
       if (token) localStorage.setItem('token', token);
 
       const usuarioResp = data.usuario || {};
-      let rol = (usuarioResp.rol || data.rol || '').toString().toLowerCase();
+      // rol desde backend / data / jwt (fallback)
+      let rol =
+        (usuarioResp.rol ?? data.rol ?? '')
+          .toString();
 
       if ((!rol || rol === '') && token && token.split('.').length === 3) {
         const payload = decodeJwtPayload(token);
-        const fromJwt = (payload?.rol || payload?.role || payload?.scope || '')
-          .toString()
-          .toLowerCase();
+        const fromJwt = (payload?.rol || payload?.role || payload?.scope || '').toString();
         if (fromJwt) rol = fromJwt;
       }
-      if (!rol) rol = 'vista';
 
-      const usuarioFinal = { ...usuarioResp, rol };
+      const usuarioFinal = {
+        ...usuarioResp,
+        rol: normalizeRol(rol),
+      };
       localStorage.setItem('usuario', JSON.stringify(usuarioFinal));
 
       persistRemember(nombre, contrasena, remember);
 
       navigate('/panel');
     } catch {
-      // Nada de console.error: consola limpia
       mostrarToast('error', 'No se pudo iniciar sesión. Intente nuevamente.');
     } finally {
       setCargando(false);

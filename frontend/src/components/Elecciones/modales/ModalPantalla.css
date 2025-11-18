@@ -1,4 +1,3 @@
-
 /* ========= Overlay ========= */
 .present-overlay {
   position: fixed;
@@ -296,16 +295,21 @@
   justify-content: center;
 }
 
-/* Tarjeta del alumno */
+/* Tarjeta del alumno: ancho según contenido (nombre) */
 .present-alumno-card {
-  width: 100%;
-  max-width: 620px;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: auto;                       /* se ajusta al contenido */
+  max-width: calc(100% - 40px);      /* seguridad para no pegarse a bordes */
   padding: 18px 26px 16px;
   border-radius: 22px;
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   box-shadow: var(--blue-inst-shadow-lg);
   text-align: center;
+  margin: 0 auto;
 }
 
 /* Texto “Alumno X de Y” */
@@ -340,13 +344,14 @@
   color: #6aa3ff;
 }
 
-/* Nombre del alumno */
+/* Nombre del alumno (UNA SOLA LÍNEA en escritorio) */
 .present-name {
   font-size: 40px;
   font-weight: 800;
   letter-spacing: 0.4px;
   line-height: 1.1;
   color: var(--text);
+  white-space: nowrap;      /* evita salto de línea */
 }
 
 /* Chip de inscripto */
@@ -473,5 +478,18 @@
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+/* ===== Responsive: en pantallas chicas dejo que pueda partirse ===== */
+@media (max-width: 768px) {
+  .present-alumno-card {
+    max-width: 100%;
+    width: 100%;           /* en mobile vuelve a ocupar todo el ancho */
+  }
+
+  .present-name {
+    font-size: 28px;
+    white-space: normal;   /* en celu permito salto de línea */
   }
 }

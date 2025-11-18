@@ -4,6 +4,7 @@ import React, {
   useState,
   forwardRef,
   useImperativeHandle,
+  useRef,
 } from "react";
 import { useNavigate } from "react-router-dom";
 import ModalPantalla from "./modales/ModalPantalla";
@@ -21,6 +22,18 @@ function PestanaEleccionInner({ BASE_URL, fetchJSON, showToast }, ref) {
 
   const [openPresent, setOpenPresent] = useState(false);
   const [startIndex, setStartIndex] = useState(0);
+
+  // ==== NUEVO: refs para conservar scroll ====
+  const gridBodyRef = useRef(null);
+  const pendingScrollRef = useRef(null);
+
+  // Cuando cambie la lista de alumnos, si hay un scroll pendiente, lo restauramos
+  useEffect(() => {
+    if (pendingScrollRef.current != null && gridBodyRef.current) {
+      gridBodyRef.current.scrollTop = pendingScrollRef.current;
+      pendingScrollRef.current = null;
+    }
+  }, [alumnos]);
 
   const esAusente = (nombre) =>
     typeof nombre === "string" &&
@@ -128,6 +141,11 @@ function PestanaEleccionInner({ BASE_URL, fetchJSON, showToast }, ref) {
 
   const onConfirmar = async (row) => {
     try {
+      // Guardar scroll actual antes de refrescar
+      if (gridBodyRef.current) {
+        pendingScrollRef.current = gridBodyRef.current.scrollTop;
+      }
+
       const selectedStr =
         seleccion[row.id_alumno] ??
         (row.id_especialidad != null ? String(row.id_especialidad) : "");
@@ -173,6 +191,7 @@ function PestanaEleccionInner({ BASE_URL, fetchJSON, showToast }, ref) {
       );
       await cargarAlumnos();
       await cargarCupos();
+      // El scroll se restaura en el useEffect de [alumnos]
     } catch (e) {
       console.error(e);
       showToast("error", e.message || "No se pudo registrar la elección.");
@@ -181,6 +200,11 @@ function PestanaEleccionInner({ BASE_URL, fetchJSON, showToast }, ref) {
 
   const onCancelar = async (row) => {
     try {
+      // Guardar scroll actual antes de refrescar
+      if (gridBodyRef.current) {
+        pendingScrollRef.current = gridBodyRef.current.scrollTop;
+      }
+
       await fetchJSON(`${BASE_URL}/api.php?action=eleccion_cancelar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -190,6 +214,7 @@ function PestanaEleccionInner({ BASE_URL, fetchJSON, showToast }, ref) {
       showToast("exito", `Se canceló la inscripción de ${row.alumno}.`);
       await cargarAlumnos();
       await cargarCupos();
+      // El scroll se restaura en el useEffect de [alumnos]
     } catch (e) {
       console.error(e);
       showToast("error", e.message || "No se pudo cancelar la inscripción.");
@@ -267,6 +292,7 @@ function PestanaEleccionInner({ BASE_URL, fetchJSON, showToast }, ref) {
 
         {/* Body con mensaje centrado tipo "sin resultados" */}
         <div
+          ref={gridBodyRef}
           className={
             "grid-body" +
             ((tablaLoading || sinAlumnos) ? " grid-body-fixed" : "")

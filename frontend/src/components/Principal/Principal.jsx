@@ -7,7 +7,7 @@ import {
   faLayerGroup,
   faSignOutAlt,
   faUserPlus,
-  faArrowDownAZ, // icono para "Cargar y ordenar"
+  faArrowDownAZ,
 } from "@fortawesome/free-solid-svg-icons";
 import "./principal.css";
 import "../Global/roots.css";
@@ -68,6 +68,13 @@ const ConfirmLogoutModal = ({ open, onClose, onConfirm }) => {
   );
 };
 
+function normalizeRol(value) {
+  if (value == null) return 'vista';
+  const v = String(value).trim().toLowerCase();
+  if (v === '1' || v === 'admin' || v === 'administrator' || v === 'administrador' || v === 'superadmin') return 'admin';
+  return 'vista';
+}
+
 const Principal = () => {
   const navigate = useNavigate();
   const [showModal, setShowModal] = useState(false);
@@ -77,6 +84,8 @@ const Principal = () => {
   useEffect(() => {
     try {
       const u = JSON.parse(localStorage.getItem("usuario"));
+      // normalizar rol por si quedó guardado de otra versión
+      if (u) u.rol = normalizeRol(u.rol);
       setUsuario(u || null);
     } catch {
       setUsuario(null);
@@ -92,23 +101,19 @@ const Principal = () => {
     } catch {}
   }, []);
 
-  const role = (usuario?.rol || "").toLowerCase();
-  const isAdmin = role === "admin";
+  const isAdmin = normalizeRol(usuario?.rol) === "admin";
 
-  // Menú completo para ADMIN
   const menuAdmin = [
     { icon: faLayerGroup, text: "Elección de Especialidad", ruta: "/eleccion-especialidad" },
     { icon: faUsers,      text: "Cupos",                   ruta: "/cupos" },
-    { icon: faArrowDownAZ,text: "Cargar y ordenar",        ruta: "/ordenar" }, // renombrado
+    { icon: faArrowDownAZ,text: "Cargar y ordenar",        ruta: "/ordenar" },
     { icon: faUserPlus,   text: "Registro",                ruta: "/registro" },
   ];
 
-  // Menú para VISTA (antes era Tabla Elección, ahora solo “Cargar y ordenar”)
   const menuVista = [
     { icon: faArrowDownAZ, text: "Cargar y ordenar", ruta: "/ordenar" },
   ];
 
-  // Items visibles según rol
   const visibleItems = isAdmin ? menuAdmin : menuVista;
 
   const handleItemClick = (item) => {

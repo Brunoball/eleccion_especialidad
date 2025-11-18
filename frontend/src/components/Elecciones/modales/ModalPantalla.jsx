@@ -129,7 +129,7 @@ const ModalPantalla = ({
       >
         {/* HEADER */}
         <div className="present-header">
-          <h2>Elección de la Especialidad</h2>
+          <h2>Elección de Especialidad</h2>
 
           <div className="present-header-actions">
             <button

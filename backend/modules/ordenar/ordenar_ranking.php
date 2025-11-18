@@ -92,10 +92,16 @@ try {
   if ($has('inasistencias_1a')) $order[] = "COALESCE(inasistencias_1a,0) ASC";
 
   // 14) Promedios (mérito)
+  //     Primero promedio_final, luego NUEVO criterio 15: promedio_1a, y luego promedio_1et
   if ($has('promedio_final')) $order[] = "COALESCE(promedio_final,0) DESC";
-  if ($has('promedio_1et'))  $order[] = "COALESCE(promedio_1et,0) DESC";
 
-  // desempates
+  // === CRITERIO 15: Promedios de 1° Año (desempate de promedio_final) ===
+  if ($has('promedio_1a'))    $order[] = "COALESCE(promedio_1a,0) DESC";
+
+  // Promedio 1° Etapa (se mantiene después)
+  if ($has('promedio_1et'))   $order[] = "COALESCE(promedio_1et,0) DESC";
+
+  // desempates finales
   $order[] = $has('alumno') ? "alumno ASC" : "id_alumno ASC";
 
   $ORDER_BY = implode(",\n        ", $order);
@@ -108,7 +114,7 @@ try {
       SELECT
         id_alumno, dni, alumno,
         trayectoria_institucional,
-        promedio_final, promedio_1et,
+        promedio_final, promedio_1a, promedio_1et,
         adeudadas_1et, previas_1et,
         repite_2a, repite_1a,
         inasistencias_1et, inasistencias_1a,
