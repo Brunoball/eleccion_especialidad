@@ -1,75 +1,23 @@
 // frontend/src/components/Eleccion/modales/ModalReset.jsx
-import React, { useState } from "react";
-
-const backdropStyle = {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(0,0,0,.35)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  zIndex: 9999,
-};
-
-const modalStyle = {
-  background: "#ffffff",
-  borderRadius: 12,
-  padding: "24px 28px",
-  maxWidth: 420,
-  width: "90%",
-  boxShadow: "0 12px 30px rgba(0,0,0,.25)",
-  fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-};
-
-const titleStyle = {
-  fontSize: 20,
-  fontWeight: 700,
-  marginBottom: 8,
-};
-
-const textStyle = {
-  fontSize: 14,
-  lineHeight: 1.5,
-  color: "#444",
-  marginBottom: 18,
-};
-
-const actionsStyle = {
-  display: "flex",
-  justifyContent: "flex-end",
-  gap: 10,
-};
-
-const btnBase = {
-  padding: "8px 14px",
-  borderRadius: 999,
-  border: "none",
-  fontSize: 14,
-  fontWeight: 600,
-  cursor: "pointer",
-};
-
-const btnCancel = {
-  ...btnBase,
-  background: "#e5e7eb",
-  color: "#111827",
-};
-
-const btnDanger = {
-  ...btnBase,
-  background: "#dc2626",
-  color: "#ffffff",
-};
+import React, { useState, useEffect } from "react";
+import "./ModalReset.css";
 
 export default function ModalReset({ open, onClose, onConfirm, loading }) {
   const [segundaConfirmacion, setSegundaConfirmacion] = useState(false);
+
+  // Cada vez que se abre/cierra desde afuera, reseteamos el paso
+  useEffect(() => {
+    if (!open) {
+      setSegundaConfirmacion(false);
+    }
+  }, [open]);
 
   if (!open) return null;
 
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget && !loading) {
-      onClose();
       setSegundaConfirmacion(false);
+      onClose();
     }
   };
 
@@ -90,22 +38,33 @@ export default function ModalReset({ open, onClose, onConfirm, loading }) {
   };
 
   return (
-    <div style={backdropStyle} onClick={handleBackdropClick}>
-      <div style={modalStyle} onClick={(e) => e.stopPropagation()}>
+    <div className="modal-reset-backdrop" onClick={handleBackdropClick}>
+      <div
+        className="modal-reset-container"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="modal-reset-icon-wrapper">
+          <div className="modal-reset-icon-circle">!</div>
+        </div>
+
         {!segundaConfirmacion ? (
           <>
-            <h2 style={titleStyle}>Resetear elección</h2>
-            <p style={textStyle}>
-              Esto va a <strong>eliminar todas las inscripciones</strong> de
+            <h2 className="modal-reset-title modal-reset-title-danger">
+              Resetear elección
+            </h2>
+            <p className="modal-reset-text">
+              Esto va a{" "}
+              <strong>eliminar todas las inscripciones</strong> de
               especialidad y dejar la tabla vacía.
+              <br />
               <br />
               ¿Seguro que querés continuar?
             </p>
 
-            <div style={actionsStyle}>
+            <div className="modal-reset-actions">
               <button
                 type="button"
-                style={btnCancel}
+                className="modal-reset-btn modal-reset-btn-cancel"
                 onClick={handleCancel}
                 disabled={loading}
               >
@@ -113,7 +72,7 @@ export default function ModalReset({ open, onClose, onConfirm, loading }) {
               </button>
               <button
                 type="button"
-                style={btnDanger}
+                className="modal-reset-btn modal-reset-btn-danger"
                 onClick={handlePrimerConfirm}
                 disabled={loading}
               >
@@ -123,8 +82,10 @@ export default function ModalReset({ open, onClose, onConfirm, loading }) {
           </>
         ) : (
           <>
-            <h2 style={titleStyle}>Confirmación final</h2>
-            <p style={textStyle}>
+            <h2 className="modal-reset-title modal-reset-title-danger">
+              Confirmación final
+            </h2>
+            <p className="modal-reset-text">
               Esta acción es <strong>irreversible</strong> y eliminará
               <br />
               <strong>TODAS</strong> las inscripciones de especialidad.
@@ -133,10 +94,10 @@ export default function ModalReset({ open, onClose, onConfirm, loading }) {
               ¿Realmente querés borrar todo?
             </p>
 
-            <div style={actionsStyle}>
+            <div className="modal-reset-actions">
               <button
                 type="button"
-                style={btnCancel}
+                className="modal-reset-btn modal-reset-btn-cancel"
                 onClick={handleCancel}
                 disabled={loading}
               >
@@ -144,7 +105,7 @@ export default function ModalReset({ open, onClose, onConfirm, loading }) {
               </button>
               <button
                 type="button"
-                style={btnDanger}
+                className="modal-reset-btn modal-reset-btn-danger"
                 onClick={handleSegundaConfirm}
                 disabled={loading}
               >

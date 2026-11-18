@@ -15,7 +15,6 @@ export default function PestanaResultados({
   const [filtro, setFiltro] = useState("todas");
   const [loading, setLoading] = useState(true);
 
-  // NUEVO: estado para el modal de reseteo
   const [openReset, setOpenReset] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
 
@@ -73,7 +72,7 @@ export default function PestanaResultados({
       const header = ["Orden", "Alumno", "DNI", "Especialidad"];
 
       const rows = visibles.map((f) => [
-        f.orden,
+        f.orden, // 👉 ahora es el orden 1..N dentro de cada especialidad
         (f.nombre || "").toUpperCase(),
         f.dni || "",
         f.especialidad || "",
@@ -104,24 +103,29 @@ export default function PestanaResultados({
     }
   };
 
-  // NUEVO: confirmación de reseteo
   const confirmarReset = async () => {
     try {
       setResetLoading(true);
 
-      await fetchJSON(`${BASE_URL}/api.php?action=eleccion_resetear`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}), // por si querés enviar algo luego
-      });
+      const resp = await fetchJSON(
+        `${BASE_URL}/api.php?action=eleccion_resetear`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ confirmar: true }),
+        }
+      );
+
+      console.log("Respuesta reset:", resp);
 
       showToast(
         "exito",
-        "Se resetearon todas las inscripciones de especialidad."
+        resp?.mensaje ||
+          "Se resetearon todas las inscripciones de especialidad."
       );
 
       setOpenReset(false);
-      await fetchAll(); // recargar tabla (quedará vacía)
+      await fetchAll();
     } catch (err) {
       console.error("Error al resetear elecciones:", err);
       showToast(
@@ -135,42 +139,45 @@ export default function PestanaResultados({
 
   return (
     <div className="res-wrapper">
-      {/* Barra de filtro + botones de acciones */}
-      <div className="res-toolbar">
-        <select
-          value={filtro}
-          onChange={(e) => setFiltro(e.target.value)}
-          className="res-select"
-        >
-          <option value="todas">Todas las especialidades</option>
-          {especialidades.map((esp) => (
-            <option key={esp.id} value={esp.nombre}>
-              {esp.nombre}
-            </option>
-          ))}
-        </select>
+      <div className="res-toolbar mod-toolbar">
+        <div className="mod-toolbar__group">
+          <select
+            value={filtro}
+            onChange={(e) => setFiltro(e.target.value)}
+            className="res-select mod-select"
+            aria-label="Filtrar por especialidad"
+          >
+            <option value="todas">Todas las especialidades</option>
+            {especialidades.map((esp) => (
+              <option key={esp.id} value={esp.nombre}>
+                {esp.nombre}
+              </option>
+            ))}
+          </select>
+          <span className="mod-count">
+            Mostrando <strong>{visibles.length}</strong> de{" "}
+            <strong>{filas.length}</strong> inscripciones
+          </span>
+        </div>
 
-        <div className="res-actions">
-          <button onClick={exportarExcel} className="res-btn-export">
+        <div className="res-actions mod-toolbar__group">
+          <button type="button" onClick={exportarExcel} className="mod-btn mod-btn--excel">
             <i className="fa-solid fa-file-export" aria-hidden="true" />
-            &nbsp;Exportar a Excel
+            Exportar a Excel
           </button>
 
-          {/* NUEVO BOTÓN RESET */}
           <button
             type="button"
-            className="res-btn-reset"
+            className="mod-btn mod-btn--danger"
             onClick={() => setOpenReset(true)}
           >
             <i className="fa-solid fa-rotate-left" aria-hidden="true" />
-            &nbsp;Resetear elección
+            Resetear elección
           </button>
         </div>
       </div>
 
-      {/* Tabla estilo grid ocupando todo el alto posible */}
       <div className="res-grid-wrapper res-grid-appear">
-        {/* Encabezado */}
         <div className="res-grid-row res-grid-header">
           <div className="res-grid-cell">Orden</div>
           <div className="res-grid-cell">Alumno</div>
@@ -178,7 +185,6 @@ export default function PestanaResultados({
           <div className="res-grid-cell">Especialidad</div>
         </div>
 
-        {/* Cuerpo con scroll interno */}
         <div className="res-grid-body">
           {loading ? (
             <div className="res-grid-body-fixed">
@@ -218,7 +224,6 @@ export default function PestanaResultados({
         </div>
       </div>
 
-      {/* MODAL RESET */}
       <ModalReset
         open={openReset}
         onClose={() => !resetLoading && setOpenReset(false)}

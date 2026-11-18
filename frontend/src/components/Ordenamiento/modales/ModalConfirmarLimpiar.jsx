@@ -66,14 +66,14 @@ const ModalConfirmarLimpiar = ({ open, onClose, onConfirm, loading, error }) => 
         {error && (
           <div
             style={{
-              background: "#ffe6e3",
-              border: "1px solid #ffb4ab",
-              color: "#7a271a",
-              padding: "8px 10px",
+              background: "var(--danger-50)",
+              border: "1px solid var(--danger-200)",
+              color: "var(--danger-700)",
+              padding: "10px 12px",
               borderRadius: "12px",
-              margin: "0 24px 18px",
-              fontWeight: 600,
-              fontSize: "0.95rem",
+              margin: "0 0 18px",
+              fontWeight: 500,
+              fontSize: "0.92rem",
             }}
           >
             {error}

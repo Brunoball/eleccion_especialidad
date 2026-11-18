@@ -1,51 +1,89 @@
 <?php
-// backend/modules/elecciones/pestana_resultados/eleccion_resetear.php
+// backend/modules/elecciones/eleccion_resetear.php
 declare(strict_types=1);
 
-ini_set('display_errors', '0');
-error_reporting(E_ALL);
+require_once __DIR__ . '/../../../config/db.php';
 
 header('Content-Type: application/json; charset=utf-8');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
 // Preflight CORS
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(204);
-    exit;
+  http_response_code(204);
+  exit;
 }
-
-// Solo permitimos POST
-if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    http_response_code(200);
-    echo json_encode([
-        'exito'   => false,
-        'mensaje' => 'Método no permitido. Usar POST.'
-    ]);
-    exit;
-}
-
-// Estamos en backend/modules/elecciones/pestana_resultados
-// Para llegar a backend/config/db.php -> ../../../config/db.php
-require_once __DIR__ . '/../../../config/db.php';  // acá tenés $pdo
 
 try {
-    // Si no tenés FKs a esta tabla, con esto basta:
-    // $pdo->exec('TRUNCATE TABLE `eleccion`');
-
-    // Versión segura por si hay claves foráneas
-    $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
-    $pdo->exec('TRUNCATE TABLE `eleccion`');
-    $pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
-
-    http_response_code(200);
+  // Solo permitimos POST
+  if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
     echo json_encode([
-        'exito'   => true,
-        'mensaje' => 'Se resetearon todas las inscripciones de especialidad.'
+      'exito' => false,
+      'mensaje' => 'Solo POST',
     ]);
+    exit;
+  }
+
+  if (!isset($pdo) || !($pdo instanceof PDO)) {
+    throw new RuntimeException('Conexión PDO no disponible.');
+  }
+
+  $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+  $pdo->exec("SET NAMES utf8mb4");
+
+  // Detectar driver (mysql/sqlite/etc)
+  $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
+
+  // ================== TRANSACCIÓN ==================
+  $pdo->beginTransaction();
+
+  // 1) Vaciar SOLO la tabla eleccion
+  $pdo->exec("DELETE FROM eleccion");
+
+  // 2) Reiniciar cupos_actuales = cupo en TODAS las especialidades
+  $sqlUpdate = "UPDATE especialidad SET cupos_actuales = cupo";
+  $filas = $pdo->exec($sqlUpdate);
+
+  if ($filas === false) {
+    throw new RuntimeException('Error al actualizar cupos_actuales (exec devolvió false).');
+  }
+
+  // Si usamos SQLite y queremos resetear la secuencia de eleccion
+  if ($driver === 'sqlite') {
+    $pdo->exec("DELETE FROM sqlite_sequence WHERE name = 'eleccion'");
+  }
+
+  $pdo->commit();
+  // ================== FIN TRANSACCIÓN ==================
+
+  // En MySQL, ALTER TABLE hace commit implícito, por eso lo hacemos FUERA de la transacción
+  if ($driver === 'mysql') {
+    try {
+      $pdo->exec("ALTER TABLE eleccion AUTO_INCREMENT = 1");
+    } catch (Throwable $e) {
+      // Si falla, no rompemos nada; solo no se resetea el autoincrement
+    }
+  }
+
+  echo json_encode([
+    'exito'   => true,
+    'mensaje' => 'Reset completo: tabla eleccion vaciada y cupos_actuales reiniciados.',
+    'filas_especialidad_actualizadas' => $filas,
+    'driver'  => $driver,
+  ]);
+
 } catch (Throwable $e) {
-    http_response_code(200);
-    echo json_encode([
-        'exito'   => false,
-        'mensaje' => 'Error al resetear la elección.',
-        'detalle' => $e->getMessage(),
-    ]);
+  try {
+    if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) {
+      $pdo->rollBack();
+    }
+  } catch (Throwable $ignored) {}
+
+  http_response_code(400);
+  echo json_encode([
+    'exito'   => false,
+    'mensaje' => 'Error al resetear: ' . $e->getMessage(),
+  ]);
 }

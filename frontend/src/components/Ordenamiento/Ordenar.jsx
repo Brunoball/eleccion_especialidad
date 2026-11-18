@@ -1,6 +1,5 @@
 // frontend/src/components/Ordenar/Ordenar.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import BASE_URL from "../../config/config";
 
 // Modales
@@ -17,8 +16,6 @@ import { resolverCriterio } from "./criterios";
 const API = `${BASE_URL.replace(/\/$/, "")}/api.php`;
 
 export default function Ordenar() {
-  const navigate = useNavigate();
-
   const [rows, setRows] = useState([]);
   const [columns, setColumns] = useState([]);
 
@@ -101,7 +98,12 @@ export default function Ordenar() {
   // Template columnas grid
   const gridTemplate = useMemo(() => {
     if (!columns.length) return "1fr";
-    return `repeat(${columns.length}, minmax(120px, 1fr))`;
+    // La columna del nombre del alumno es más ancha para que no se corte
+    return columns
+      .map((c) =>
+        c === "alumno" ? "minmax(240px, 2.6fr)" : "minmax(110px, 1fr)"
+      )
+      .join(" ");
   }, [columns]);
 
   // ====== EXPORTACIÓN ======
@@ -227,46 +229,67 @@ export default function Ordenar() {
   };
 
   return (
-    <div className="org-ordenar-page">
+    <div className="org-ordenar-page mod-page">
       <div className="org-ordenar-container">
-        {/* HEADER */}
-        <header className="org-ordenar-header">
-          <div className="org-ordenar-header-bar">
-            <div className="org-ordenar-header-text">
+        {/* ENCABEZADO: título y acciones en una sola fila */}
+        <header className="mod-head">
+          <div className="mod-head__main">
+            <span className="mod-head__icon" aria-hidden="true">
+              <i className="fa-solid fa-arrow-down-a-z" />
+            </span>
+            <div className="mod-head__titles">
               <h1>Ordenamiento de alumnos</h1>
               <p>
-                Vista de ordenamiento de alumnos según criterios definidos por
-                el equipo directivo.
+                Ranking según los criterios definidos por el equipo directivo.
               </p>
             </div>
-
-            <button
-              onClick={() => navigate("/panel")}
-              className="org-ordenar-back-btn"
-            >
-              <i className="fa-solid fa-arrow-left" aria-hidden="true" />
-              <span>Volver</span>
-            </button>
           </div>
 
           {/* Acciones principales */}
-          <div className="org-ordenar-actions">
+          <div className="mod-head__actions org-ordenar-actions">
             <button
+              type="button"
               onClick={() => setOpenCriterios(true)}
-              className="org-btn org-btn-secondary"
+              className="mod-btn mod-btn--ghost org-btn-secondary"
             >
               <i className="fa-solid fa-list-check" aria-hidden="true" />
               <span>Criterios</span>
             </button>
 
-            <button onClick={() => setOpenImport(true)} className="org-btn">
+            <button
+              type="button"
+              onClick={() => setOpenImport(true)}
+              className="mod-btn"
+            >
               <i className="fa-solid fa-file-import" aria-hidden="true" />
               <span>Importar datos</span>
             </button>
 
             <button
+              type="button"
+              onClick={handleExportExcel}
+              className="mod-btn mod-btn--excel"
+            >
+              <i className="fa-regular fa-file-excel" aria-hidden="true" />
+              <span>Exportar Excel</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setClearError("");
+                setOpenClear(true);
+              }}
+              className="mod-btn mod-btn--danger"
+            >
+              <i className="fa-solid fa-trash-can" aria-hidden="true" />
+              <span>Limpiar todo</span>
+            </button>
+
+            <button
+              type="button"
               onClick={() => setOpenOrdenar(true)}
-              className="org-btn org-btnd-primary"
+              className="mod-btn mod-btn--primary"
             >
               <i
                 className="fa-solid fa-arrow-down-short-wide"
@@ -274,30 +297,11 @@ export default function Ordenar() {
               />
               <span>Ordenar ranking</span>
             </button>
-
-            <button
-              onClick={handleExportExcel}
-              className="org-btn org-btn-success"
-            >
-              <i className="fa-regular fa-file-excel" aria-hidden="true" />
-              <span>Exportar Excel</span>
-            </button>
-
-            <button
-              onClick={() => {
-                setClearError("");
-                setOpenClear(true);
-              }}
-              className="org-btn org-btn-danger"
-            >
-              <i className="fa-solid fa-trash-can" aria-hidden="true" />
-              <span>Limpiar todo</span>
-            </button>
           </div>
         </header>
 
         {/* MAIN */}
-        <main className="org-ordenar-main">
+        <main className="org-ordenar-main mod-body">
           <div className="org-ordenar-table-wrapper">
             <div className="org-ordenar-table-header">
               <span>
@@ -354,7 +358,9 @@ export default function Ordenar() {
                           return (
                             <div
                               key={col}
-                              className="org-ordenar-grid-cell"
+                              className={`org-ordenar-grid-cell${
+                                col === "alumno" ? " is-name" : ""
+                              }`}
                               title={display}
                             >
                               {display}
@@ -382,10 +388,6 @@ export default function Ordenar() {
           </div>
         </main>
 
-        {/* FOOTER */}
-        <footer className="org-ordenar-footer">
-          Ordenamiento · IPET 50 · {columns.length} columnas visibles
-        </footer>
       </div>
 
       {/* === MODALES === */}

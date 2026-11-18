@@ -32,7 +32,8 @@ try {
     $idEleccion = $idTmp;
   }
 
-  // SELECT
+  // SELECT base
+  // Notar que traemos a.orden como orden_alumno (orden global del alumno)
   $sql = "
     SELECT
       e.id_eleccion      AS id_eleccion,
@@ -40,6 +41,7 @@ try {
       e.id_especialidad  AS id_especialidad,
       a.alumno           AS alumno,
       a.dni              AS dni,
+      a.orden            AS orden_alumno,
       s.especialidad     AS especialidad
     FROM `eleccion` e
       INNER JOIN `alumnos` a
@@ -52,8 +54,15 @@ try {
     $sql .= " WHERE e.id_eleccion = :id_eleccion ";
   }
 
-  // ORDENAR POR EL id_eleccion
-  $sql .= " ORDER BY e.id_eleccion ASC ";
+  // 🔥 Ordenamos por especialidad + orden global del alumno + id_eleccion
+  // Esto garantiza que dentro de cada especialidad los alumnos
+  // se ordenen según su orden global (a.orden), y si hay empate, por id_eleccion.
+  $sql .= "
+    ORDER BY
+      e.id_especialidad ASC,
+      a.orden ASC,
+      e.id_eleccion ASC
+  ";
 
   $stmt = $pdo->prepare($sql);
 
@@ -64,13 +73,32 @@ try {
   $stmt->execute();
 
   $data = [];
+
+  // 👉 Variables para llevar el contador por especialidad
+  $ultimoIdEspecialidad = null;
+  $contadorEspecialidad = 0;
+
   while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-    // 👉 ORDEN = id_eleccion (lo que querías)
+    $idEsp = (int)$row['id_especialidad'];
+
+    // Si cambia la especialidad, reseteamos el contador
+    if ($ultimoIdEspecialidad === null || $idEsp !== $ultimoIdEspecialidad) {
+      $contadorEspecialidad = 1;
+      $ultimoIdEspecialidad = $idEsp;
+    } else {
+      $contadorEspecialidad++;
+    }
+
     $data[] = [
-      'orden'           => (int)$row['id_eleccion'],
+      // 🔢 ESTE es el orden que ves en la tabla: 1,2,3... dentro de *cada* especialidad
+      'orden'           => $contadorEspecialidad,
+
+      // Extras por si querés ver o debuggear:
+      'orden_alumno'    => isset($row['orden_alumno']) ? (int)$row['orden_alumno'] : null,
+
       'id_eleccion'     => (int)$row['id_eleccion'],
       'id_alumno'       => (int)$row['id_alumno'],
-      'id_especialidad' => (int)$row['id_especialidad'],
+      'id_especialidad' => $idEsp,
       'nombre'          => (string)$row['alumno'],
       'dni'             => (string)$row['dni'],
       'especialidad'    => (string)$row['especialidad'],

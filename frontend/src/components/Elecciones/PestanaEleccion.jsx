@@ -236,47 +236,54 @@ function PestanaEleccionInner({ BASE_URL, fetchJSON, showToast }, ref) {
   const ausenteObj = especialidades.find((e) => esAusente(e.nombre));
   const ausenteCount = Number(ausenteObj?.cupos_actuales || 0);
 
+  const inscriptosCount = alumnos.filter((a) => a.id_especialidad !== null).length;
+
   const tablaLoading = loading || loadingAlumnos;
   const sinAlumnos = !tablaLoading && alumnos.length === 0;
 
   return (
     <>
-      {/* Mini grilla de materias */}
-      <h3 className="cupos-titulo" style={{ marginTop: 0 }}>
-        Materias
-      </h3>
+      {/* Cupos disponibles por especialidad: una sola tira compacta */}
+      <div className="cupos-strip" aria-label="Cupos disponibles por especialidad">
+        <span className="cupos-strip__label">
+          <i className="fa-solid fa-chair" aria-hidden="true" />
+          Cupos
+        </span>
 
-      <div className="materias-grid-6">
-        {materiasNormales.map((m) => {
-          const disp = Number(m.cupos_actuales || 0);
-          return (
-            <button
-              key={m.id}
-              type="button"
-              className="materia-card-mini"
-              title={m.nombre}
-            >
-              <div className="materia-title">{m.nombre}</div>
-              <div className="materia-meta">
-                <span className={`dot ${disp > 0 ? "ok" : "no"}`} />
-                <span className="count">
-                  Disponibles: <b>{disp}</b>
-                </span>
+        <div className="cupos-strip__list">
+          {materiasNormales.map((m) => {
+            const disp = Number(m.cupos_actuales || 0);
+            const estado = disp <= 0 ? "is-out" : disp <= 5 ? "is-low" : "is-ok";
+            return (
+              <div
+                key={m.id}
+                className={`cupo-chip ${estado}`}
+                title={`${m.nombre}: ${disp} disponibles de ${m.cupo}`}
+              >
+                <span className="cupo-chip__dot" aria-hidden="true" />
+                <span className="cupo-chip__name">{m.nombre}</span>
+                <strong className="cupo-chip__value">
+                  {disp}
+                  <small>/{m.cupo}</small>
+                </strong>
               </div>
-            </button>
-          );
-        })}
-      </div>
+            );
+          })}
 
-      {/* AUSENTE mini pill */}
-      <div className="ausente-row">
-        <div
-          className="ausente-pill"
-          title="Registro de AUSENTES (no consume cupo)"
-        >
-          <span className="pill-label">AUSENTES</span>
-          <span className="pill-count">{ausenteCount}</span>
+          <div
+            className="cupo-chip is-ausente"
+            title="Registro de AUSENTES (no consume cupo)"
+          >
+            <span className="cupo-chip__dot" aria-hidden="true" />
+            <span className="cupo-chip__name">Ausentes</span>
+            <strong className="cupo-chip__value">{ausenteCount}</strong>
+          </div>
         </div>
+
+        <span className="cupos-strip__meta">
+          Inscriptos <strong>{inscriptosCount}</strong> de{" "}
+          <strong>{alumnos.length}</strong>
+        </span>
       </div>
 
       {/* GRID de alumnos */}

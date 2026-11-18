@@ -1,0 +1,162 @@
+/* =========================================================
+   MODAL RESETEAR ELECCIÓN (doble confirmación)
+   Estilo de modal de eliminación del sistema RH.
+   ========================================================= */
+.modal-reset-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 23, 42, 0.5);
+  backdrop-filter: blur(3px);
+  font-family: var(--font-sans);
+  animation: modalResetFade 0.14s ease-out;
+}
+
+.modal-reset-container {
+  position: relative;
+  width: min(500px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  padding: 26px 24px 22px;
+  border-top: 4px solid var(--danger-600);
+  border-radius: var(--radius-xl);
+  background: #fff;
+  box-shadow: 0 20px 50px rgba(15, 23, 42, 0.28);
+  color: var(--text-primary);
+  text-align: center;
+  animation: modalResetPop 0.16s ease-out;
+}
+
+.modal-reset-icon-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.modal-reset-icon-circle {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: 16px;
+  background: var(--danger-100);
+  color: var(--danger-600);
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.modal-reset-title {
+  margin: 0 0 10px;
+  color: var(--text-primary);
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.modal-reset-title-danger {
+  color: var(--danger-700);
+}
+
+.modal-reset-text {
+  margin: 0 0 22px;
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.55;
+}
+
+.modal-reset-text strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.modal-reset-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.modal-reset-btn {
+  flex: 1;
+  min-width: 140px;
+  max-width: 200px;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid transparent;
+  border-radius: 14px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 0.16s ease,
+    box-shadow 0.16s ease,
+    background-color 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.modal-reset-btn-cancel {
+  border-color: var(--gray-300);
+  background: #fff;
+  color: var(--gray-700);
+}
+
+.modal-reset-btn-cancel:hover:not(:disabled) {
+  background: var(--gray-100);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(148, 163, 184, 0.4);
+}
+
+.modal-reset-btn-danger {
+  border-color: var(--danger-600);
+  background: var(--danger-600);
+  color: #fff;
+}
+
+.modal-reset-btn-danger:hover:not(:disabled) {
+  border-color: var(--danger-700);
+  background: var(--danger-700);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--danger-500) 35%, transparent);
+}
+
+.modal-reset-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--danger-500) 18%, transparent);
+}
+
+.modal-reset-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+@keyframes modalResetFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalResetPop {
+  from { opacity: 0.7; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 480px) {
+  .modal-reset-container {
+    padding: 22px 16px 18px;
+  }
+
+  .modal-reset-actions {
+    flex-direction: column-reverse;
+  }
+
+  .modal-reset-btn {
+    width: 100%;
+    max-width: none;
+  }
+}

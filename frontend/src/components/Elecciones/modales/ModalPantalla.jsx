@@ -1,3 +1,4 @@
+// src/components/Eleccion/modales/ModalPantalla.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import "./ModalPantalla.css";
@@ -191,7 +192,11 @@ const ModalPantalla = ({
             const selected = Number(selectedId) === e.id;
             const bloqueada =
               (agotado && !aus) || (row?.id_especialidad !== null);
+
             const countClass = agotado ? "no" : low ? "low" : "ok";
+
+            // 👉 Mostrar "AUSENTES" en la tarjeta, aunque en DB sea "AUSENTE"
+            const displayNombre = aus ? "AUSENTES" : e.nombre;
 
             return (
               <button
@@ -214,21 +219,19 @@ const ModalPantalla = ({
                     : "Seleccionar"
                 }
               >
-                <div className="present-cupo-nombre">
-                  {e.nombre}
-                  {aus && (
-                    <span className="present-aus-count">
-                      {disp}
-                    </span>
-                  )}
-                </div>
+                <div className="present-cupo-nombre">{displayNombre}</div>
 
-                {!aus && (
-                  <div className="present-cupo-disp">
-                    Disponibles:{" "}
-                    <strong className={countClass}>{disp}</strong>
-                  </div>
-                )}
+                {/* Número grande de cupos */}
+                <div className="present-cupo-count">
+                  <span
+                    className={[
+                      "present-cupo-number",
+                      countClass,
+                    ].join(" ")}
+                  >
+                    {disp}
+                  </span>
+                </div>
               </button>
             );
           })}
@@ -254,7 +257,13 @@ const ModalPantalla = ({
 
                   {row.id_especialidad !== null && (
                     <div className="present-inscripto">
-                      Inscripto: <strong>{row.especialidad}</strong>
+                      Inscripto:{" "}
+                      <strong>
+                        {row.especialidad ||
+                          especialidades.find(
+                            (e) => e.id === Number(row.id_especialidad)
+                          )?.nombre}
+                      </strong>
                     </div>
                   )}
                 </div>

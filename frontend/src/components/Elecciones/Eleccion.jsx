@@ -1,28 +1,28 @@
 // frontend/src/components/Eleccion/Eleccion.jsx
-import React, { useMemo, useRef, useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useCallback, useMemo, useRef, useState, useEffect } from "react";
 import BASE_URL from "../../config/config";
 import Toast from "../Global/Toast";
 import PestanaEleccion from "./PestanaEleccion";
 import PestanaResultados from "./PestanaResultados";
 import "./Eleccion.css";
-import logoEscuela from "../../imagenes/Escudo.png";
+import "@fortawesome/fontawesome-free/css/all.min.css";
 
 export default function Eleccion() {
-  const navigate = useNavigate();
-
   const [activeTab, setActiveTab] = useState("eleccion");
   const [toast, setToast] = useState(null);
   const toastCtrl = useRef({ timer: null });
 
-  const clearToastTimer = () => {
+  // Funciones estables (useCallback): la pestaña Resultados las usa como
+  // dependencias y, si cambiaran en cada render, volvería a pedir los datos
+  // cada vez que aparece un aviso.
+  const clearToastTimer = useCallback(() => {
     if (toastCtrl.current.timer) {
       clearTimeout(toastCtrl.current.timer);
       toastCtrl.current.timer = null;
     }
-  };
+  }, []);
 
-  const showToast = (tipo, mensaje, duracion = 2800) => {
+  const showToast = useCallback((tipo, mensaje, duracion = 2800) => {
     clearToastTimer();
     setToast(null);
     setTimeout(() => {
@@ -35,14 +35,14 @@ export default function Eleccion() {
         toastCtrl.current.timer = null;
       }, Math.max(800, duracion + 100));
     }, 0);
-  };
+  }, [clearToastTimer]);
 
   const handleToastClose = (id) => {
     clearToastTimer();
     setToast((t) => (t && t.id === id ? null : t));
   };
 
-  const fetchJSON = async (url, opts = {}) => {
+  const fetchJSON = useCallback(async (url, opts = {}) => {
     const res = await fetch(url, opts);
     const text = await res.text();
     let data = {};
@@ -57,7 +57,7 @@ export default function Eleccion() {
       throw new Error(data?.mensaje || "Error");
     }
     return data;
-  };
+  }, []);
 
   const user = useMemo(() => {
     try {
@@ -76,14 +76,6 @@ export default function Eleccion() {
     eleccionRef.current?.abrirModoPantallaDesde?.(0);
   };
 
-  const volverDashboardIgual = () => {
-    if (eleccionRef.current?.irDashboard) {
-      eleccionRef.current.irDashboard();
-      return;
-    }
-    navigate(-1);
-  };
-
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
     const t = requestAnimationFrame(() => setMounted(true));
@@ -91,70 +83,65 @@ export default function Eleccion() {
   }, []);
 
   return (
-    <div className="eleccion-root">
-      {/* HEADER FULL WIDTH */}
-      <header className="eleccion-header">
-        <div className="header-left">
-          <div className="logo-wrap">
-            <img
-              src={logoEscuela}
-              alt="Logo de la escuela"
-              className="school-logo"
-            />
-          </div>
-
-          <div className="header-text">
-            <h1 className="header-title">Elección de la Especialidad</h1>
-
-            {/* Pestañas estilo navegador debajo del título */}
-            <div className="tabs tabs-under-title">
-              <button
-                className={`tab ${
-                  activeTab === "eleccion" ? "active" : ""
-                }`}
-                onClick={() => setActiveTab("eleccion")}
-              >
-                Elección
-              </button>
-              <button
-                className={`tab ${
-                  activeTab === "resultados" ? "active" : ""
-                }`}
-                onClick={() => setActiveTab("resultados")}
-              >
-                Resultados
-              </button>
-            </div>
-
-
+    <div className="eleccion-root mod-page">
+      {/* ENCABEZADO: título, pestañas y acciones en una sola fila */}
+      <header className="mod-head">
+        <div className="mod-head__main">
+          <span className="mod-head__icon" aria-hidden="true">
+            <i className="fa-solid fa-layer-group" />
+          </span>
+          <div className="mod-head__titles">
+            <h1>Elección de especialidad</h1>
+            <p>
+              {activeTab === "eleccion"
+                ? "Asigná la especialidad de cada alumno según el orden del ranking."
+                : "Consultá, filtrá y exportá las inscripciones confirmadas."}
+            </p>
           </div>
         </div>
 
-        <div className="header-right">
-          <div className="cards-actions">
+        <div className="mod-head__center">
+          <div className="mod-tabs" role="tablist" aria-label="Secciones de la elección">
             <button
-              id="btn-modo-pantalla"
-              className={`btn btn-ghost fade-toggle ${
-                activeTab === "eleccion" ? "fade-in" : "fade-out"
-              }`}
-              onClick={abrirModoPantallaDesdeInicio}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "eleccion"}
+              className={`mod-tab ${activeTab === "eleccion" ? "is-active" : ""}`}
+              onClick={() => setActiveTab("eleccion")}
             >
-              Modo Pantalla
+              <i className="fa-solid fa-list-check" aria-hidden="true" />
+              Elección
             </button>
-
             <button
-              id="btn-volver-dashboard"
-              className="btn btn-primary"
-              onClick={volverDashboardIgual}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "resultados"}
+              className={`mod-tab ${activeTab === "resultados" ? "is-active" : ""}`}
+              onClick={() => setActiveTab("resultados")}
             >
-              Volver
+              <i className="fa-solid fa-square-poll-vertical" aria-hidden="true" />
+              Resultados
             </button>
           </div>
+        </div>
+
+        <div className="mod-head__actions">
+          <button
+            id="btn-modo-pantalla"
+            type="button"
+            className={`mod-btn mod-btn--primary fade-toggle ${
+              activeTab === "eleccion" ? "fade-in" : "fade-out"
+            }`}
+            onClick={abrirModoPantallaDesdeInicio}
+          >
+            <i className="fa-solid fa-display" aria-hidden="true" />
+            <span>Modo Pantalla</span>
+          </button>
         </div>
       </header>
 
-      {/* MAIN FULL HEIGHT */}
-      <main className={`eleccion-main modal-appear ${mounted ? "in" : ""}`}>
+      {/* CONTENIDO */}
+      <main className={`eleccion-main mod-body modal-appear ${mounted ? "in" : ""}`}>
         <div className="eleccion-content">
           {activeTab === "eleccion" ? (
             <PestanaEleccion

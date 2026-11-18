@@ -5,7 +5,9 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 /* Páginas */
 import Inicio from './components/Login/Inicio';
 import Principal from './components/Principal/Principal';
-import Registro from './components/Login/Registro';
+import Panel from './components/Principal/Panel';
+import Configuracion from './components/Configuracion/Configuracion';
+import UsuariosConfiguracion from './components/Configuracion/UsuariosConfiguracion';
 import Eleccion from './components/Elecciones/Eleccion';
 import Cupo from './components/Cupos/Cupo';
 import Ordenar from './components/Ordenamiento/Ordenar'; // 👈 sigue disponible
@@ -101,6 +103,18 @@ function RutaProtegida({ children }) {
   return isAuthenticated() ? children : <Navigate to="/" replace />;
 }
 
+/* Solo administradores (Configuración) */
+function esAdmin() {
+  try {
+    const rol = String(JSON.parse(localStorage.getItem('usuario'))?.rol ?? '').trim().toLowerCase();
+    return ['1', 'admin', 'administrator', 'administrador', 'superadmin'].includes(rol);
+  } catch { return false; }
+}
+
+function RutaAdmin({ children }) {
+  return esAdmin() ? children : <Navigate to="/panel" replace />;
+}
+
 /* =========================================================
    🚏 Ruteo principal
 ========================================================= */
@@ -113,55 +127,33 @@ export default function App() {
         {/* Login público */}
         <Route path="/" element={<Inicio />} />
 
-        {/* Panel principal (protegido) */}
+        {/* Rutas protegidas: comparten el layout (barra superior + barra lateral) */}
         <Route
-          path="/panel"
           element={
             <RutaProtegida>
               <Principal />
             </RutaProtegida>
           }
-        />
+        >
+          {/* Panel principal (dashboard) */}
+          <Route path="/panel" element={<Panel />} />
 
-        {/* Elección de Especialidad (protegido) */}
-        <Route
-          path="/eleccion-especialidad"
-          element={
-            <RutaProtegida>
-              <Eleccion />
-            </RutaProtegida>
-          }
-        />
+          {/* Elección de Especialidad */}
+          <Route path="/eleccion-especialidad" element={<Eleccion />} />
 
-        {/* Cupos (protegido) */}
-        <Route
-          path="/cupos"
-          element={
-            <RutaProtegida>
-              <Cupo />
-            </RutaProtegida>
-          }
-        />
+          {/* Cupos */}
+          <Route path="/cupos" element={<Cupo />} />
 
-        {/* Ordenar (protegido) */}
-        <Route
-          path="/ordenar"
-          element={
-            <RutaProtegida>
-              <Ordenar />
-            </RutaProtegida>
-          }
-        />
+          {/* Ordenar */}
+          <Route path="/ordenar" element={<Ordenar />} />
 
-        {/* Registro (si lo querés público, sacá RutaProtegida) */}
-        <Route
-          path="/registro"
-          element={
-            <RutaProtegida>
-              <Registro />
-            </RutaProtegida>
-          }
-        />
+          {/* Configuración (solo administradores) */}
+          <Route path="/configuracion" element={<RutaAdmin><Configuracion /></RutaAdmin>} />
+          <Route path="/configuracion/usuarios" element={<RutaAdmin><UsuariosConfiguracion /></RutaAdmin>} />
+
+          {/* El antiguo registro ahora vive en Configuración → Usuarios */}
+          <Route path="/registro" element={<Navigate to="/configuracion/usuarios" replace />} />
+        </Route>
 
         {/* Cualquier otra ruta → login */}
         <Route path="*" element={<Navigate to="/" replace />} />

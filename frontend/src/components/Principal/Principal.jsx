@@ -1,16 +1,25 @@
 // src/components/Principal/Principal.jsx
-import React, { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+// Layout principal: barra superior + barra lateral + contenido (Outlet).
+import React, { useEffect, useMemo, useState, useRef } from "react";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { createPortal } from "react-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faUsers,
-  faLayerGroup,
+  faBars,
+  faXmark,
+  faGear,
   faSignOutAlt,
-  faUserPlus,
-  faArrowDownAZ,
+  faRightFromBracket,
 } from "@fortawesome/free-solid-svg-icons";
+import {
+  CONFIG_ITEM,
+  INICIO_ITEM,
+  ROL_LABEL,
+  getMenu,
+  leerUsuario,
+  nombreUsuario,
+} from "./menu";
 import "./principal.css";
-import "../Global/roots.css";
 import logoRH from "../../imagenes/Escudo.png";
 
 /* =========== Modal cierre de sesión ============= */
@@ -28,7 +37,7 @@ const ConfirmLogoutModal = ({ open, onClose, onConfirm }) => {
   if (!open) return null;
   const stop = (e) => e.stopPropagation();
 
-  return (
+  return createPortal(
     <div
       className="modalprincipal-overlay"
       role="dialog"
@@ -64,62 +73,45 @@ const ConfirmLogoutModal = ({ open, onClose, onConfirm }) => {
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };
 
-function normalizeRol(value) {
-  if (value == null) return 'vista';
-  const v = String(value).trim().toLowerCase();
-  if (v === '1' || v === 'admin' || v === 'administrator' || v === 'administrador' || v === 'superadmin') return 'admin';
-  return 'vista';
+function EscudoMark() {
+  return <img className="pp-escudo" src={logoRH} alt="" aria-hidden="true" />;
 }
 
 const Principal = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [showModal, setShowModal] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
-  const [usuario, setUsuario] = useState(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // Se relee en cada cambio de ruta (por ejemplo, si se editó el propio usuario).
+  const usuario = useMemo(
+    () => leerUsuario(),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [location.pathname]
+  );
+  const isAdmin = usuario?.rol === "admin";
+  const nombre = nombreUsuario(usuario);
+  const navItems = [INICIO_ITEM, ...getMenu(isAdmin)];
+  const enConfiguracion = location.pathname.startsWith(CONFIG_ITEM.ruta);
 
   useEffect(() => {
-    try {
-      const u = JSON.parse(localStorage.getItem("usuario"));
-      // normalizar rol por si quedó guardado de otra versión
-      if (u) u.rol = normalizeRol(u.rol);
-      setUsuario(u || null);
-    } catch {
-      setUsuario(null);
-    }
-  }, []);
+    setDrawerOpen(false);
+  }, [location.pathname]);
 
-  useEffect(() => {
-    try {
-      localStorage.removeItem("ultimaBusqueda");
-      localStorage.removeItem("ultimosResultados");
-      localStorage.removeItem("alumnoSeleccionado");
-      localStorage.removeItem("ultimaAccion");
-    } catch {}
-  }, []);
-
-  const isAdmin = normalizeRol(usuario?.rol) === "admin";
-
-  const menuAdmin = [
-    { icon: faLayerGroup, text: "Elección de Especialidad", ruta: "/eleccion-especialidad" },
-    { icon: faUsers,      text: "Cupos",                   ruta: "/cupos" },
-    { icon: faArrowDownAZ,text: "Cargar y ordenar",        ruta: "/ordenar" },
-    { icon: faUserPlus,   text: "Registro",                ruta: "/registro" },
-  ];
-
-  const menuVista = [
-    { icon: faArrowDownAZ, text: "Cargar y ordenar", ruta: "/ordenar" },
-  ];
-
-  const visibleItems = isAdmin ? menuAdmin : menuVista;
-
-  const handleItemClick = (item) => {
-    navigate(item.ruta);
-    document.activeElement?.blur?.();
-  };
+  const activeLabel = useMemo(() => {
+    const all = [INICIO_ITEM, ...getMenu(true), CONFIG_ITEM];
+    const found = all.find(
+      (item) =>
+        location.pathname === item.ruta || location.pathname.startsWith(`${item.ruta}/`)
+    );
+    return found ? found.text : "IPET 50";
+  }, [location.pathname]);
 
   const confirmarCierreSesion = () => {
     setIsExiting(true);
@@ -133,52 +125,154 @@ const Principal = () => {
   };
 
   return (
-    <div className={`pagina-principal-container ${isExiting ? "slide-fade-out" : ""}`}>
-      <div className="pagina-principal-card">
-        <div className="pagina-principal-header header--row">
-          <div className="header-text">
-            <h1 className="title">
-              Sistema de <span className="title-accent">Elección de Especialidad IPET 50</span>
-            </h1>
-            <p className="subtitle">
-              {isAdmin ? "Panel de elección de especialidad" : "Gestión de carga y orden"}
-            </p>
-          </div>
-          <div className="logo-container logo-container--right">
-            <img src={logoRH} alt="Logo IPET 50" className="logo" />
-          </div>
-        </div>
+    <div className={`pp-shell ${isExiting ? "pp-shell--exiting" : ""}`}>
+      {/* ===== Barra superior ===== */}
+      <header className="pp-topbar">
+        <div className="pp-topbar__left">
+          <button
+            className="pp-iconBtn pp-burger"
+            type="button"
+            onClick={() => setDrawerOpen(true)}
+            aria-label="Abrir menú"
+          >
+            <FontAwesomeIcon icon={faBars} />
+          </button>
 
-        <div className="menu-container">
-          <div className="menu-grid flex--compact">
-            {visibleItems.map((item, index) => (
-              <button
-                key={index}
-                className="menu-button card--compact"
-                onClick={() => handleItemClick(item)}
-              >
-                <div className="button-icon icon--sm">
-                  <FontAwesomeIcon icon={item.icon} size="lg" />
-                </div>
-                <span className="button-text text--sm">{item.text}</span>
-              </button>
-            ))}
+          <div className="pp-topbar__brand">
+            <span className="pp-topbar__mark">
+              <EscudoMark />
+            </span>
+            <span className="pp-topbar__brandText">
+              <strong>IPET 50</strong>
+              <small>Elección de Especialidad</small>
+            </span>
           </div>
         </div>
 
-        <button type="button" className="logout-button" onClick={() => setShowModal(true)}>
-          <FontAwesomeIcon icon={faSignOutAlt} className="logout-icon" />
-          <span className="logout-text-full">Cerrar Sesión</span>
-          <span className="logout-text-short">Salir</span>
-        </button>
+        <div className="pp-topbar__right">
+          <div className="pp-topbar__section">{activeLabel}</div>
 
-        <footer className="pagina-principal-footer">
-          Desarrollado por{" "}
-          <a href="https://3devsnet.com" target="_blank" rel="noopener noreferrer">
-            3devs.solutions
-          </a>
-        </footer>
-      </div>
+          {isAdmin ? (
+            <button
+              className={`pp-iconBtn pp-topbarConfig ${enConfiguracion ? "is-active" : ""}`}
+              type="button"
+              onClick={() => navigate(CONFIG_ITEM.ruta)}
+              title="Configuración"
+              aria-label="Abrir configuración"
+            >
+              <FontAwesomeIcon icon={faGear} />
+            </button>
+          ) : null}
+
+          {nombre ? (
+            <div className="pp-topbar__user" title={nombre}>
+              <span className="pp-topbar__avatar" aria-hidden="true">
+                {nombre.charAt(0).toUpperCase()}
+              </span>
+              <span className="pp-topbar__userText">
+                <strong>{nombre}</strong>
+                <small>{ROL_LABEL[usuario?.rol] || "Vista"}</small>
+              </span>
+            </div>
+          ) : null}
+
+          <button
+            className="pp-iconBtn pp-topbarLogout"
+            type="button"
+            onClick={() => setShowModal(true)}
+            title="Cerrar sesión"
+            aria-label="Cerrar sesión"
+          >
+            <FontAwesomeIcon icon={faRightFromBracket} />
+          </button>
+        </div>
+      </header>
+
+      {/* ===== Fondo del menú móvil ===== */}
+      <div
+        className={`pp-drawerOverlay ${drawerOpen ? "is-open" : ""}`}
+        onMouseDown={() => setDrawerOpen(false)}
+      />
+
+      {/* ===== Barra lateral ===== */}
+      <aside className={`pp-sidebar ${drawerOpen ? "is-drawerOpen" : ""}`}>
+        <div className="pp-drawerHeader">
+          <div className="pp-brand">
+            <div className="pp-brand__mark">
+              <EscudoMark />
+            </div>
+            <div className="pp-brand__text">
+              <div className="pp-brand__title">IPET 50</div>
+              <div className="pp-brand__subtitle">Elección de Especialidad</div>
+            </div>
+          </div>
+          <button
+            className="pp-drawerClose"
+            type="button"
+            onClick={() => setDrawerOpen(false)}
+            aria-label="Cerrar menú"
+          >
+            <FontAwesomeIcon icon={faXmark} />
+          </button>
+        </div>
+
+        <div
+          className="pp-brand pp-brand--side"
+          onClick={() => navigate("/panel")}
+          onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && navigate("/panel")}
+          role="button"
+          tabIndex={0}
+          title="Ir al inicio"
+        >
+          <div className="pp-brand__mark">
+            <EscudoMark />
+          </div>
+          <div className="pp-brand__text">
+            <div className="pp-brand__title">IPET 50</div>
+            <div className="pp-brand__subtitle">Elección de Especialidad</div>
+          </div>
+        </div>
+
+        <nav className="pp-nav" aria-label="Navegación principal">
+          {navItems.map((item) => (
+            <NavLink
+              key={item.key}
+              to={item.ruta}
+              end={item.ruta === "/panel"}
+              className={({ isActive }) => `pp-nav__item ${isActive ? "is-active" : ""}`}
+              title={item.text}
+              onClick={() => document.activeElement?.blur?.()}
+            >
+              <span className="pp-nav__icon">
+                <FontAwesomeIcon icon={item.icon} />
+              </span>
+              <span className="pp-nav__label">{item.text}</span>
+            </NavLink>
+          ))}
+
+          {isAdmin ? (
+            <NavLink
+              to={CONFIG_ITEM.ruta}
+              className={({ isActive }) =>
+                `pp-nav__item pp-nav__item--mobileOnly ${isActive ? "is-active" : ""}`
+              }
+              title={CONFIG_ITEM.text}
+            >
+              <span className="pp-nav__icon">
+                <FontAwesomeIcon icon={CONFIG_ITEM.icon} />
+              </span>
+              <span className="pp-nav__label">{CONFIG_ITEM.text}</span>
+            </NavLink>
+          ) : null}
+        </nav>
+      </aside>
+
+      {/* ===== Contenido ===== */}
+      <main className="pp-content">
+        <div className="pp-content__inner">
+          <Outlet />
+        </div>
+      </main>
 
       <ConfirmLogoutModal
         open={showModal}

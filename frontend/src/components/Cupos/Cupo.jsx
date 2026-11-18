@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import BASE_URL from '../../config/config';
 import Toast from '../Global/Toast';
 import './Cupo.css';
+import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const API = `${BASE_URL.replace(/\/$/, '')}/api.php`;
 
@@ -203,29 +204,49 @@ const Cupo = () => {
     );
   }
 
+  const totalCupos = especialidades.reduce((acc, e) => {
+    const v = valorEditado(e.id, e.cupo);
+    return acc + (v === '' ? 0 : Number(v) || 0);
+  }, 0);
+  const cantidadEditadas = especialidades.filter(
+    (e) => String(valorEditado(e.id, e.cupo)) !== String(e.cupo ?? 0)
+  ).length;
+
   return (
-    <div className="cupo-container">
+    <div className="cupo-container mod-page">
       <div className="panel">
-        <div className="panel-header">
-          <div className="panel-title">
-            <h1>Elección de la Especialidad</h1>
-            <p>Gestión de cupos por especialidad</p>
+        <header className="mod-head">
+          <div className="mod-head__main">
+            <span className="mod-head__icon" aria-hidden="true">
+              <i className="fa-solid fa-chair" />
+            </span>
+            <div className="mod-head__titles">
+              <h1>Cupos por especialidad</h1>
+              <p>Definí cuántos lugares tiene cada especialidad para la elección.</p>
+            </div>
           </div>
 
-          {/* Botón de Guardar todos DENTRO del contenedor redondeado */}
-          <div className="panel-actions">
+          <div className="mod-head__actions">
+            <span className="mod-count">
+              Cupo total <strong>{totalCupos}</strong>
+              {cantidadEditadas > 0 ? (
+                <>
+                  {' · '}
+                  <strong className="cupo-pending">{cantidadEditadas}</strong> sin guardar
+                </>
+              ) : null}
+            </span>
             <button
-              className="btn-primary"
+              type="button"
+              className="mod-btn mod-btn--primary"
               disabled={guardando || !hayCambios}
               onClick={guardarTodos}
             >
+              <i className="fa-solid fa-floppy-disk" aria-hidden="true" />
               {guardando ? 'Guardando…' : 'Guardar todos'}
             </button>
-            <button className="btn-ghost" onClick={volver}>
-              Volver
-            </button>
           </div>
-        </div>
+        </header>
 
         <div className="especialidades-grid">
           {especialidades.map((e) => {

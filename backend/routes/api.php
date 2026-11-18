@@ -35,6 +35,30 @@ try {
       exit;
 
     /* ===========================
+       DASHBOARD (panel de inicio)
+    ============================ */
+    case 'dashboard_resumen':
+      require_once __DIR__ . '/../modules/dashboard/resumen.php';
+      exit;
+
+    /* ===========================
+       CONFIGURACIÓN · USUARIOS
+    ============================ */
+    case 'usuarios_listar':
+      require_once __DIR__ . '/../modules/usuarios/listar.php';
+      exit;
+
+    case 'usuarios_guardar':
+      // Body JSON: {id?, nombre, rol, contrasena?, id_actual?}
+      require_once __DIR__ . '/../modules/usuarios/guardar.php';
+      exit;
+
+    case 'usuarios_eliminar':
+      // Body JSON: {id, id_actual}
+      require_once __DIR__ . '/../modules/usuarios/eliminar.php';
+      exit;
+
+    /* ===========================
        GLOBAL
     ============================ */
     case 'obtener_listas':

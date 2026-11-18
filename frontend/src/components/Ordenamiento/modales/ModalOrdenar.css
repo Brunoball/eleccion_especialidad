@@ -1,278 +1,528 @@
-/* src/components/Ordenamiento/modales/ModalOrdenar.css */
+/* =========================================================
+   MODALES "ORDENAR RANKING" (ord-) e "IMPORTAR ALUMNOS" (imp-)
+   Estilo de modal del sistema RH: encabezado azul, cuerpo
+   claro, pie con acciones.
+   ========================================================= */
 
-/* Overlay con fade-in sutil */
-.ord-overlay {
+/* ---------- Overlay ---------- */
+.ord-overlay,
+.imp-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.0);
+  z-index: var(--z-modal);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 16px;
-  z-index: 1200;
-  animation: ord-overlay-in 0.18s ease-out forwards;
+  padding: 18px;
+  overflow: auto;
+  background: rgba(8, 16, 30, 0.56);
+  backdrop-filter: blur(2px);
+  font-family: var(--font-sans);
+  animation: ordFade 0.14s ease-out;
 }
 
-/* Modal con altura estable + animación */
-.ord-modal {
+/* ---------- Caja ---------- */
+.ord-modal,
+.imp-modal {
   width: 100%;
-  max-width: 1100px;
-  height: 80vh;         /* 👈 altura fija relativa para mantener tamaño */
-  max-height: 88vh;
-  background: #ffffff;
-  border-radius: 10px;
-  box-shadow: var(--blue-inst-shadow-lg, 0 16px 36px -10px rgba(0,0,0,.22));
+  margin: auto;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-
-  opacity: 0;
-  transform: translateY(-6px) scale(0.97);
-  animation: ord-modal-in 0.22s cubic-bezier(.22,.61,.36,1) forwards;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 20px;
+  background: var(--background-color);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-modal);
+  animation: ordPop 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
-/* HEADER */
-.ord-header {
-  padding: 14px 18px;
-  background: var(--blue-inst-primary);
-  color: #ffffff;
+.ord-modal {
+  max-width: 1100px;
+  height: 80vh;
+  max-height: 88vh;
+}
+
+.imp-modal {
+  max-width: 960px;
+  max-height: calc(100dvh - 36px);
+}
+
+/* ---------- Encabezado ---------- */
+.ord-header,
+.imp-header {
+  min-height: 70px;
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 16px;
+  padding: 14px 18px 14px 20px;
+  background: var(--primary-color);
+  color: #fff;
 }
 
-.ord-header-title {
+.ord-header-title,
+.imp-header-title {
+  min-width: 0;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
-.ord-header-icon {
-  font-size: 22px;
+.ord-header-icon,
+.imp-header-icon {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 18px;
 }
 
-.ord-header-title h3 {
+.ord-header-title h3,
+.imp-header-title h2 {
   margin: 0;
+  color: #fff;
   font-size: 17px;
-  font-weight: 800;
-  letter-spacing: 0.03em;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
-.ord-header-title p {
-  margin: 0;
-  font-size: 12px;
-  opacity: 0.95;
+.ord-header-title p,
+.imp-header-title p {
+  margin: 2px 0 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 13px;
 }
 
-.ord-close {
-  appearance: none;
-  border: 0;
-  background: transparent;
-  color: #ffffff;
-  font-size: 20px;
+.ord-close,
+.imp-close {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  font-size: 16px;
   line-height: 1;
   cursor: pointer;
-  padding: 6px 8px;
-  border-radius: 10px;
-  transition: var(--blue-inst-transition);
+  transition: background 0.16s ease, transform 0.16s ease;
 }
 
-.ord-close:hover {
-  background: rgba(255, 255, 255, 0.16);
+.ord-close:hover,
+.imp-close:hover {
+  background: rgba(255, 255, 255, 0.18);
+  transform: translateY(-1px);
 }
 
-/* BODY:
-   - ocupa todo entre header y footer
-   - deja que loader / tabla definan el contenido sin cambiar altura del modal */
-.ord-body {
-  padding: 10px 18px 8px;
+.ord-close:focus-visible,
+.imp-close:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.24);
+}
+
+/* ---------- Cuerpo ---------- */
+.ord-body,
+.imp-body {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  flex: 1;        /* ocupa el espacio disponible */
-  min-height: 0;  /* permite scroll interno en hijos */
+  gap: 12px;
+  padding: 18px 20px 14px;
 }
 
-/* Mensajes de error */
-.ord-error {
-  padding: 8px 10px;
-  border-radius: 8px;
-  background: #fef2f2;
-  color: #b91c1c;
-  font-size: 12px;
+.ord-body {
+  flex: 1;
+  min-height: 0;
+}
+
+.imp-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.ord-error,
+.imp-diag {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--danger-500) 24%, #fff);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--danger-500) 8%, #fff);
+  color: var(--danger-700);
+  font-size: 13px;
+  font-weight: 500;
 }
 
-/* Loader:
-   - ocupa el mismo espacio que la tabla (flex:1)
-   - centrado para no achicar el contenedor */
 .ord-loading {
   flex: 1;
-  padding: 14px;
-  font-size: 13px;
-  color: var(--blue-inst-gray-800);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
+  padding: 14px;
+  color: var(--text-secondary);
+  font-size: 14px;
 }
 
-.ord-spin {
-  animation: ord-spin 0.7s linear infinite;
+.ord-loading .ord-spin,
+.imp-spin {
+  color: var(--primary-color);
 }
 
-/* Tabla con scroll interno:
-   - ocupa todo el alto disponible debajo del error (si lo hay)
-   - el modal no crece, solo scrollea este contenedor */
+.ord-spin,
+.imp-spin {
+  animation: ordSpin 0.7s linear infinite;
+}
+
+/* ---------- Tablas ---------- */
+.ord-table-wrap,
+.imp-table-wrap {
+  overflow: auto;
+  border: 1px solid var(--ui-border);
+  border-radius: 14px;
+  background: #fff;
+}
+
 .ord-table-wrap {
-  margin-top: 4px;
-  border-radius: 10px;
-  border: 1px solid var(--blue-inst-gray-200);
-  background: #ffffff;
   flex: 1;
-  min-height: 0;   /* imprescindible para que flex permita scroll */
-  overflow: auto;  /* scroll acá */
+  min-height: 0;
 }
 
-.ord-table {
+.imp-table-wrap {
+  max-height: 280px;
+}
+
+.ord-table,
+.imp-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 12px;
+  font-size: 12.5px;
 }
 
-.ord-table thead {
+.ord-table thead,
+.imp-table thead {
   position: sticky;
   top: 0;
-  background: #eff6ff;
   z-index: 1;
 }
 
 .ord-table th,
-.ord-table td {
-  padding: 6px 8px;
-  border-bottom: 1px solid #e5e7eb;
+.imp-table th {
+  padding: 10px;
+  border-bottom: 1px solid var(--primary-100);
+  background: var(--primary-50);
+  color: var(--primary-800);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.ord-table td,
+.imp-table td {
+  max-width: 260px;
+  padding: 8px 10px;
+  overflow: hidden;
+  border-bottom: 1px solid var(--ui-border-soft);
+  color: color-mix(in srgb, var(--text-primary) 82%, #000);
+  text-align: left;
   white-space: nowrap;
   text-overflow: ellipsis;
-  overflow: hidden;
-  text-align: left;
 }
 
-.ord-table th {
-  font-weight: 700;
-  font-size: 11px;
-  color: var(--blue-inst-gray-800);
+.ord-table tbody tr:nth-child(even),
+.imp-table tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--background-color) 70%, #fff);
 }
 
-.ord-table tbody tr:nth-child(even) {
-  background: #f9fafb;
+.ord-table tbody tr:hover,
+.imp-table tbody tr:hover {
+  background: color-mix(in srgb, var(--primary-color) 5%, #fff);
+}
+
+.ord-table td:first-child {
+  color: var(--primary-700);
+  font-weight: 600;
 }
 
 .ord-empty {
-  padding: 14px;
-  text-align: center;
-  font-size: 12px;
-  color: var(--blue-inst-gray-600);
+  padding: 22px 14px !important;
+  color: var(--text-muted);
+  font-size: 13px;
+  text-align: center !important;
 }
 
-/* FOOTER */
-.ord-footer {
-  padding: 10px 18px 8px;
-  border-top: 1px solid var(--blue-inst-gray-200);
+/* ---------- Pie ---------- */
+.ord-footer,
+.imp-footer {
+  flex: 0 0 auto;
   display: flex;
   justify-content: flex-end;
   gap: 10px;
+  padding: 14px 20px 10px;
+  border-top: 1px solid var(--ui-border-soft);
+  background: #fff;
 }
 
-.ord-btn {
-  padding: 9px 16px;
-  border-radius: 10px;
-  font-weight: 700;
-  font-size: 13px;
-  border: none;
-  cursor: pointer;
+.ord-btn,
+.imp-btn {
+  min-height: 42px;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  transition: var(--blue-inst-transition);
-  box-shadow: var(--blue-inst-shadow-sm, 0 1px 3px rgba(0,0,0,.08));
+  justify-content: center;
+  gap: 8px;
+  padding: 0 16px;
+  border: 1px solid var(--ui-border);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform var(--ui-trans),
+    box-shadow var(--ui-trans),
+    background var(--ui-trans),
+    border-color var(--ui-trans);
 }
 
-.ord-btn-neutral {
-  background: var(--blue-inst-gray-200);
-  color: var(--blue-inst-gray-900);
+.ord-btn-neutral,
+.imp-btn-neutral {
+  background: #fff;
+  color: var(--text-primary);
 }
 
-.ord-btn-neutral:hover {
-  background: var(--blue-inst-gray-300);
+.ord-btn-neutral:hover:not(:disabled),
+.imp-btn-neutral:hover:not(:disabled) {
+  background: var(--gray-100);
+  transform: translateY(-1px);
 }
 
-.ord-btn-primary {
-  background: var(--blue-inst-primary);
-  color: #ffffff;
+.ord-btn-primary,
+.imp-btn-accent {
+  border-color: color-mix(in srgb, var(--primary-color) 60%, #fff);
+  background: var(--primary-color);
+  color: #fff;
+  box-shadow: var(--shadow-primary);
 }
 
-.ord-btn-primary:hover {
-  background: var(--blue-inst-primary-light);
-  box-shadow: var(--blue-inst-shadow-md, 0 6px 18px rgba(0,0,0,.12));
+.ord-btn-primary:hover:not(:disabled),
+.imp-btn-accent:hover:not(:disabled) {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: 0 14px 26px rgb(37 99 235 / 0.22);
 }
 
-.ord-btn:disabled {
-  opacity: 0.6;
+.ord-btn:focus-visible,
+.imp-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus);
+}
+
+.ord-btn:disabled,
+.imp-btn:disabled {
+  opacity: 0.55;
   cursor: not-allowed;
+  transform: none;
   box-shadow: none;
 }
 
-/* TIP */
-.ord-tip {
-  padding: 4px 18px 12px;
-  font-size: 11px;
-  color: var(--blue-inst-gray-600);
+.ord-tip,
+.imp-tip {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  padding: 0 20px 14px;
+  background: #fff;
+  color: var(--text-muted);
+  font-size: 12px;
 }
 
-/* Animaciones */
-@keyframes ord-overlay-in {
-  from { background: rgba(15, 23, 42, 0.0); }
-  to   { background: rgba(15, 23, 42, 0.40); }
+.ord-tip i,
+.imp-tip i {
+  color: var(--warning-500);
 }
 
-@keyframes ord-modal-in {
-  from {
-    opacity: 0;
-    transform: translateY(-6px) scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+.imp-tip code {
+  padding: 1px 5px;
+  border-radius: 5px;
+  background: var(--gray-100);
+  color: var(--text-primary);
 }
 
-@keyframes ord-spin {
+/* ---------- Importar: instrucciones y zona de carga ---------- */
+.imp-instructions {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.imp-code {
+  display: block;
+  max-height: 64px;
+  margin-top: 6px;
+  padding: 8px 10px;
+  overflow: auto;
+  border: 1px solid var(--ui-border);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--text-primary);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.imp-dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 22px 16px;
+  border: 1.5px dashed color-mix(in srgb, var(--primary-color) 40%, transparent);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--primary-color) 3%, #fff);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  transition: background var(--ui-trans), border-color var(--ui-trans), box-shadow var(--ui-trans);
+}
+
+.imp-dropzone:hover {
+  border-color: var(--primary-color);
+  background: color-mix(in srgb, var(--primary-color) 6%, #fff);
+  box-shadow: var(--ui-focus);
+}
+
+.imp-dropzone-disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.imp-file-input {
+  display: none;
+}
+
+.imp-dropzone-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.imp-dropzone-label u {
+  color: var(--primary-color);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.imp-dropzone-icon {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+  color: var(--primary-color);
+  font-size: 20px;
+}
+
+.imp-uploading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.imp-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.imp-preview-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.imp-preview-icon {
+  color: var(--primary-color);
+}
+
+.imp-headers {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.imp-headers b {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.imp-no-preview {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+/* ---------- Animaciones ---------- */
+@keyframes ordFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ordPop {
+  from { opacity: 0.96; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ordSpin {
   to { transform: rotate(360deg); }
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+/* ---------- Responsive ---------- */
+@media (max-width: 640px) {
+  .ord-overlay,
+  .imp-overlay {
+    padding: 10px;
+  }
+
   .ord-modal {
-    max-width: 100%;
-    height: 80vh; /* mantiene el mismo criterio en mobile */
+    height: calc(100dvh - 20px);
+    max-height: none;
   }
 
-  .ord-header-title h3 {
-    font-size: 15px;
+  .ord-header-title p,
+  .imp-header-title p {
+    font-size: 12px;
   }
 
-  .ord-table {
-    font-size: 11px;
+  .ord-footer,
+  .imp-footer {
+    flex-direction: column-reverse;
   }
 
-  .ord-table th,
-  .ord-table td {
-    padding: 5px 6px;
+  .ord-btn,
+  .imp-btn {
+    width: 100%;
   }
 }
