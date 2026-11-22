@@ -1,11 +1,22 @@
 // src/components/Ordenar/modales/ModalConfirmarLimpiar.jsx
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 import "../../Principal/principal.css"; // asegúrate de importar donde estén las clases modalprincipal-*
+import OpcionHistorial from "../../Historial/OpcionHistorial";
 
 const ModalConfirmarLimpiar = ({ open, onClose, onConfirm, loading, error }) => {
   const cancelBtnRef = useRef(null);
+  // "Guardar historial" viene marcado por defecto
+  const [guardarHistorial, setGuardarHistorial] = useState(true);
+  const [tituloHistorial, setTituloHistorial] = useState("");
+
+  useEffect(() => {
+    if (open) {
+      setGuardarHistorial(true);
+      setTituloHistorial("");
+    }
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -63,6 +74,14 @@ const ModalConfirmarLimpiar = ({ open, onClose, onConfirm, loading, error }) => 
           <strong>irreversible</strong>.
         </p>
 
+        <OpcionHistorial
+          checked={guardarHistorial}
+          onChange={setGuardarHistorial}
+          titulo={tituloHistorial}
+          onTituloChange={setTituloHistorial}
+          disabled={loading}
+        />
+
         {error && (
           <div
             style={{
@@ -93,10 +112,16 @@ const ModalConfirmarLimpiar = ({ open, onClose, onConfirm, loading, error }) => 
           <button
             type="button"
             className="modalprincipal-btn modalprincipal-btn--solid-danger"
-            onClick={onConfirm}
+            onClick={() =>
+              onConfirm({ guardarHistorial, titulo: tituloHistorial.trim() })
+            }
             disabled={loading}
           >
-            {loading ? "Eliminando..." : "Sí, limpiar todo"}
+            {loading
+              ? "Eliminando..."
+              : guardarHistorial
+              ? "Guardar y limpiar"
+              : "Sí, limpiar todo"}
           </button>
         </div>
       </div>

@@ -1,0 +1,48 @@
+ELEGIR CONTRA QUÉ BACKEND SE PRUEBA  →  testing/.env
+
+LOCAL:      TEST_API_URL=http://localhost:3001
+HOSTINGER:  TEST_API_URL=https://eleccion.ipet50.edu.ar/api/routes
+
+
+
+
+PASO 1 (ANTES DE SUBIR CAMBIOS): PROBAR LO GLOBAL
+
+node ejecutar.cjs global
+
+
+
+PASO 2: PROBAR EL MÓDULO QUE TOCASTE (ELEGÍ UNO)
+
+
+INICIO (DASHBOARD)
+node ejecutar.cjs panel
+
+
+ELECCIÓN DE ESPECIALIDAD (CONFIRMAR, CANCELAR, RESULTADOS, RESETEAR)
+node ejecutar.cjs eleccion
+
+
+HISTORIAL DE ELECCIONES
+node ejecutar.cjs historial
+
+
+CUPOS
+node ejecutar.cjs cupos
+
+
+CARGAR Y ORDENAR (TABLA, IMPORTAR, RANKING, LIMPIAR TODO)
+node ejecutar.cjs ordenar
+
+
+CONFIGURACIÓN · USUARIOS Y ROLES
+node ejecutar.cjs usuarios
+
+
+SUITE COMPLETA (ANTES DE SUBIR A HOSTINGER O DESPUÉS DE TOCAR LA BASE)
+node ejecutar.cjs completo
+
+
+
+
+

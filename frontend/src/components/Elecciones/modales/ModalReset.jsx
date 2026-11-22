@@ -1,14 +1,20 @@
 // frontend/src/components/Eleccion/modales/ModalReset.jsx
 import React, { useState, useEffect } from "react";
+import OpcionHistorial from "../../Historial/OpcionHistorial";
 import "./ModalReset.css";
 
-export default function ModalReset({ open, onClose, onConfirm, loading }) {
+export default function ModalReset({ open, onClose, onConfirm, loading, cantidad = null }) {
   const [segundaConfirmacion, setSegundaConfirmacion] = useState(false);
+  // "Guardar historial" viene marcado por defecto
+  const [guardarHistorial, setGuardarHistorial] = useState(true);
+  const [tituloHistorial, setTituloHistorial] = useState("");
 
-  // Cada vez que se abre/cierra desde afuera, reseteamos el paso
+  // Cada vez que se abre/cierra desde afuera, reseteamos el paso y la opción
   useEffect(() => {
     if (!open) {
       setSegundaConfirmacion(false);
+      setGuardarHistorial(true);
+      setTituloHistorial("");
     }
   }, [open]);
 
@@ -26,7 +32,7 @@ export default function ModalReset({ open, onClose, onConfirm, loading }) {
   };
 
   const handleSegundaConfirm = () => {
-    onConfirm();
+    onConfirm({ guardarHistorial, titulo: tituloHistorial.trim() });
   };
 
   const handleCancel = () => {
@@ -56,10 +62,16 @@ export default function ModalReset({ open, onClose, onConfirm, loading }) {
               Esto va a{" "}
               <strong>eliminar todas las inscripciones</strong> de
               especialidad y dejar la tabla vacía.
-              <br />
-              <br />
-              ¿Seguro que querés continuar?
             </p>
+
+            <OpcionHistorial
+              checked={guardarHistorial}
+              onChange={setGuardarHistorial}
+              titulo={tituloHistorial}
+              onTituloChange={setTituloHistorial}
+              disabled={loading}
+              cantidad={cantidad}
+            />
 
             <div className="modal-reset-actions">
               <button
@@ -85,14 +97,25 @@ export default function ModalReset({ open, onClose, onConfirm, loading }) {
             <h2 className="modal-reset-title modal-reset-title-danger">
               Confirmación final
             </h2>
-            <p className="modal-reset-text">
-              Esta acción es <strong>irreversible</strong> y eliminará
-              <br />
-              <strong>TODAS</strong> las inscripciones de especialidad.
-              <br />
-              <br />
-              ¿Realmente querés borrar todo?
-            </p>
+            {guardarHistorial ? (
+              <p className="modal-reset-text">
+                Primero se va a <strong>guardar la elección en el historial</strong>{" "}
+                y después se eliminarán <strong>TODAS</strong> las inscripciones
+                de especialidad.
+                <br />
+                <br />
+                ¿Confirmás el reseteo?
+              </p>
+            ) : (
+              <p className="modal-reset-text">
+                <strong>No se guardará historial.</strong> Esta acción es{" "}
+                <strong>irreversible</strong> y eliminará{" "}
+                <strong>TODAS</strong> las inscripciones de especialidad.
+                <br />
+                <br />
+                ¿Realmente querés borrar todo?
+              </p>
+            )}
 
             <div className="modal-reset-actions">
               <button

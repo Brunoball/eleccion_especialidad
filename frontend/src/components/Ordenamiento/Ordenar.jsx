@@ -12,6 +12,7 @@ import "./Ordenar.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import Toast from "../Global/Toast";
 import { resolverCriterio } from "./criterios";
+import { leerUsuario, nombreUsuario } from "../Principal/menu";
 
 const API = `${BASE_URL.replace(/\/$/, "")}/api.php`;
 
@@ -202,15 +203,20 @@ export default function Ordenar() {
   };
 
   // ====== LIMPIAR TODO ======
-  const handleClearConfirm = async () => {
+  const handleClearConfirm = async ({ guardarHistorial = true, titulo = "" } = {}) => {
     try {
       setClearError("");
       setClearLoading(true);
 
-      await fetchJSON(`${API}?action=reset_elecciones&confirmar=1`, {
+      const resp = await fetchJSON(`${API}?action=reset_elecciones&confirmar=1`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ confirmar: 1 }),
+        body: JSON.stringify({
+          confirmar: 1,
+          guardar_historial: guardarHistorial,
+          titulo_historial: titulo,
+          usuario: nombreUsuario(leerUsuario()),
+        }),
       });
 
       setClearLoading(false);
@@ -218,7 +224,7 @@ export default function Ordenar() {
       setRows([]);
       showToast(
         "exito",
-        "Se limpiaron los datos y se reiniciaron los cupos."
+        resp?.mensaje || "Se limpiaron los datos y se reiniciaron los cupos."
       );
     } catch (e) {
       setClearLoading(false);
@@ -417,8 +423,8 @@ export default function Ordenar() {
       <ModalConfirmarLimpiar
         open={openClear}
         onClose={() => setOpenClear(false)}
-        onConfirm={async () => {
-          await handleClearConfirm();
+        onConfirm={async (opciones) => {
+          await handleClearConfirm(opciones);
           cargarTabla();
         }}
         loading={clearLoading}

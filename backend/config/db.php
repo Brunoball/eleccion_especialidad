@@ -5,6 +5,8 @@
 //Gastex2233
 //php -S localhost:3001 -c "C:\PHP\php1\php.ini"
 
+//php -c "C:\php\php.ini" -S localhost:3001
+
 $host = 'localhost';
 $dbname = 'eleccion_especialidad';
 $user = 'root'; // Cambialo si usás otro usuario

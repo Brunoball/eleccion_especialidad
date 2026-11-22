@@ -1,0 +1,18 @@
+{
+  "name": "ipet50-eleccion-testing",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Testing E2E (API + pantallas) del sistema de Elección de Especialidad IPET 50",
+  "scripts": {
+    "test": "node ejecutar.cjs completo",
+    "test:api": "node ejecutar.cjs completo --api",
+    "test:ui": "node ejecutar.cjs completo --ui",
+    "test:global": "node ejecutar.cjs global",
+    "verificar": "node ejecutar.cjs verificar",
+    "reporte": "playwright show-report playwright-report",
+    "instalar-navegador": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1"
+  }
+}

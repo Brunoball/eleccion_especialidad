@@ -1,0 +1,10 @@
+# Credenciales y destino del testing: NUNCA al repo
+.env
+.env.*
+!.env.example
+
+node_modules/
+.auth/
+test-results/
+playwright-report/
+blob-report/

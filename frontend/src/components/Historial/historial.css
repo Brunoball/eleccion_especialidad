@@ -1,0 +1,332 @@
+/* =========================================================
+   HISTORIAL DE ELECCIONES
+   - Casilla "Guardar historial" de los modales de limpieza
+   - Pestaña Historial (selector de fecha, resumen y tabla)
+   ========================================================= */
+
+/* ===== Casilla en los modales ===== */
+.hist-opt {
+  --tone: var(--primary-color);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--tone) 28%, var(--border-color));
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--tone) 6%, #fff);
+  text-align: left;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.hist-opt.is-off {
+  --tone: var(--warning-500);
+}
+
+.hist-opt.is-disabled {
+  opacity: 0.6;
+}
+
+.hist-opt__check {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  cursor: pointer;
+}
+
+.hist-opt.is-disabled .hist-opt__check {
+  cursor: not-allowed;
+}
+
+.hist-opt__check input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.hist-opt__box {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  margin-top: 1px;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid var(--gray-300);
+  border-radius: 6px;
+  background: #fff;
+  color: transparent;
+  font-size: 11px;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+}
+
+.hist-opt__check input:checked + .hist-opt__box {
+  border-color: var(--primary-color);
+  background: var(--primary-color);
+  color: #fff;
+}
+
+.hist-opt__check input:focus-visible + .hist-opt__box {
+  box-shadow: var(--ui-focus);
+}
+
+.hist-opt__copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.hist-opt__copy strong {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.hist-opt__copy strong svg,
+.hist-opt__copy strong i {
+  color: var(--primary-color);
+  font-size: 13px;
+}
+
+.hist-opt__copy small {
+  color: var(--text-secondary);
+  font-size: 12.5px;
+  line-height: 1.4;
+}
+
+.hist-opt__title {
+  width: 100%;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.hist-opt__title:focus {
+  border-color: var(--primary-color);
+  box-shadow: var(--ui-focus);
+}
+
+.hist-opt__warn,
+.hist-opt__note {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.hist-opt__warn {
+  color: var(--warning-700);
+}
+
+.hist-opt__note {
+  color: var(--text-muted);
+}
+
+/* ===== Pestaña Historial ===== */
+.eleccion-root .hist-wrapper {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.eleccion-root .hist-empty span {
+  max-width: 520px;
+  line-height: 1.5;
+}
+
+.eleccion-root .hist-picker {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.eleccion-root .hist-picker > svg,
+.eleccion-root .hist-picker > i {
+  position: absolute;
+  left: 12px;
+  color: var(--primary-color);
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.eleccion-root .hist-picker__select {
+  width: 380px;
+  max-width: 100%;
+  padding-left: 34px;
+  border-color: color-mix(in srgb, var(--primary-color) 30%, var(--ui-border));
+  background: color-mix(in srgb, var(--primary-color) 5%, #fff);
+  font-weight: 600;
+}
+
+.eleccion-root .hist-filter {
+  width: 220px;
+}
+
+.eleccion-root .hist-search {
+  width: 230px !important;
+}
+
+/* Resumen de la elección elegida */
+.eleccion-root .hist-summary {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--primary-color) 18%, var(--ui-border));
+  border-radius: 14px;
+  background:
+    radial-gradient(240px 90px at 100% 0%, color-mix(in srgb, var(--primary-color) 10%, transparent), transparent 62%),
+    linear-gradient(135deg, color-mix(in srgb, var(--primary-color) 6%, #fff), #fff);
+}
+
+.eleccion-root .hist-summary__main {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+}
+
+.eleccion-root .hist-summary__icon {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  background: var(--gradient-primary);
+  color: #fff;
+  font-size: 14px;
+}
+
+.eleccion-root .hist-summary__titles {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.eleccion-root .hist-summary__titles strong {
+  overflow: hidden;
+  color: var(--ui-ink);
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.eleccion-root .hist-summary__titles span {
+  color: var(--ui-text);
+  font-size: 12px;
+}
+
+.eleccion-root .hist-summary__meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.eleccion-root .hist-meta {
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid var(--ui-border);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ui-text);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.eleccion-root .hist-meta svg,
+.eleccion-root .hist-meta i {
+  color: var(--primary-color);
+  font-size: 11px;
+}
+
+.eleccion-root .hist-meta b {
+  color: var(--ui-ink);
+  font-weight: 700;
+}
+
+.eleccion-root .hist-meta--soft {
+  border-style: dashed;
+  color: var(--ui-muted);
+}
+
+/* Chips de especialidad clickeables (filtran la tabla) */
+.eleccion-root .hist-chip {
+  font-family: inherit;
+  cursor: pointer;
+  transition: box-shadow var(--ui-trans), transform var(--ui-trans);
+}
+
+.eleccion-root .hist-chip:hover {
+  transform: translateY(-1px);
+}
+
+.eleccion-root .hist-chip.is-selected {
+  box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+.eleccion-root .hist-chip:focus-visible {
+  outline: none;
+  box-shadow: var(--ui-focus);
+}
+
+/* Tabla */
+.eleccion-root .res-grid-row.hist-row {
+  grid-template-columns: 76px minmax(0, 2fr) 130px minmax(0, 1.2fr) 100px;
+}
+
+.eleccion-root .hist-center {
+  text-align: center;
+}
+
+.eleccion-root .res-grid-body > .hist-row .res-grid-cell:nth-child(5) {
+  color: var(--ui-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 1100px) {
+  .eleccion-root .hist-picker,
+  .eleccion-root .hist-picker__select {
+    width: 100%;
+  }
+}
+
+@media (max-width: 720px) {
+  .eleccion-root .hist-filter,
+  .eleccion-root .hist-search {
+    width: 100% !important;
+  }
+
+  .eleccion-root .res-grid-row.hist-row {
+    grid-template-columns: 48px minmax(0, 1.6fr) minmax(0, 1fr);
+  }
+
+  .eleccion-root .res-grid-row.hist-row .res-grid-cell:nth-child(3),
+  .eleccion-root .res-grid-row.hist-row .res-grid-cell:nth-child(5) {
+    display: none;
+  }
+}

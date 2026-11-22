@@ -1,0 +1,39 @@
+{
+  "modulos": {
+    "global": {
+      "descripcion": "Router de la API, login, navegación por todas las secciones y cierre de sesión",
+      "carpetas": ["global", "login"],
+      "impactos": []
+    },
+    "panel": {
+      "descripcion": "Inicio / dashboard",
+      "carpetas": ["panel"],
+      "impactos": []
+    },
+    "eleccion": {
+      "descripcion": "Elección de especialidad: confirmar, cancelar, resultados y resetear",
+      "carpetas": ["eleccion"],
+      "impactos": ["panel/panel.api.spec.js", "cupos/cupos.api.spec.js", "historial/historial.api.spec.js"]
+    },
+    "historial": {
+      "descripcion": "Historial de elecciones (listado, detalle, eliminar) + el reseteo que lo genera",
+      "carpetas": ["historial"],
+      "impactos": ["eleccion/resetear.api.spec.js"]
+    },
+    "cupos": {
+      "descripcion": "Cupos por especialidad",
+      "carpetas": ["cupos"],
+      "impactos": ["panel/panel.api.spec.js"]
+    },
+    "ordenar": {
+      "descripcion": "Cargar y ordenar: tabla, importación, ranking y limpiar todo",
+      "carpetas": ["ordenar"],
+      "impactos": ["eleccion/eleccion.api.spec.js", "panel/panel.api.spec.js"]
+    },
+    "usuarios": {
+      "descripcion": "Configuración → Usuarios y roles (incluye permisos del rol vista)",
+      "carpetas": ["usuarios"],
+      "impactos": ["login/login.api.spec.js"]
+    }
+  }
+}

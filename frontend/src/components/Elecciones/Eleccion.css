@@ -651,6 +651,11 @@
 }
 
 @media (max-width: 720px) {
+  /* En celular no se reserva el lugar del botón oculto */
+  .eleccion-root .fade-toggle.fade-out {
+    display: none;
+  }
+
   .eleccion-root .cupos-strip {
     flex-wrap: wrap;
     padding: 8px 10px;

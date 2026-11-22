@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import "./Eleccion.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import ModalReset from "./modales/ModalReset";
+import { leerUsuario, nombreUsuario } from "../Principal/menu";
 
 export default function PestanaResultados({
   BASE_URL,
@@ -103,7 +104,7 @@ export default function PestanaResultados({
     }
   };
 
-  const confirmarReset = async () => {
+  const confirmarReset = async ({ guardarHistorial = true, titulo = "" } = {}) => {
     try {
       setResetLoading(true);
 
@@ -112,7 +113,12 @@ export default function PestanaResultados({
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ confirmar: true }),
+          body: JSON.stringify({
+            confirmar: true,
+            guardar_historial: guardarHistorial,
+            titulo_historial: titulo,
+            usuario: nombreUsuario(leerUsuario()),
+          }),
         }
       );
 
@@ -229,6 +235,7 @@ export default function PestanaResultados({
         onClose={() => !resetLoading && setOpenReset(false)}
         onConfirm={confirmarReset}
         loading={resetLoading}
+        cantidad={loading ? null : filas.length}
       />
     </div>
   );

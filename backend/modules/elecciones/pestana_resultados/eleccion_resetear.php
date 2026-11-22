@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../../../config/db.php';
+require_once __DIR__ . '/../../historial/historial_lib.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
@@ -36,8 +37,27 @@ try {
   // Detectar driver (mysql/sqlite/etc)
   $driver = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME);
 
+  // ¿Guardar historial antes de borrar? (por defecto SÍ)
+  $body = historial_leer_body();
+  $guardarHistorial = historial_debe_guardar($body);
+  if ($guardarHistorial) {
+    // CREATE TABLE hace commit implícito en MySQL: va antes de la transacción
+    historial_asegurar_tablas($pdo);
+  }
+  $historial = ['guardado' => false, 'id' => null, 'inscriptos' => 0];
+
   // ================== TRANSACCIÓN ==================
   $pdo->beginTransaction();
+
+  // 0) Copiar la elección actual al historial (misma transacción:
+  //    si algo falla, no se borra nada)
+  if ($guardarHistorial) {
+    $historial = historial_guardar($pdo, [
+      'titulo'  => (string)($body['titulo_historial'] ?? ''),
+      'usuario' => (string)($body['usuario'] ?? ''),
+      'origen'  => 'resultados',
+    ]);
+  }
 
   // 1) Vaciar SOLO la tabla eleccion
   $pdo->exec("DELETE FROM eleccion");
@@ -69,10 +89,11 @@ try {
 
   echo json_encode([
     'exito'   => true,
-    'mensaje' => 'Reset completo: tabla eleccion vaciada y cupos_actuales reiniciados.',
+    'mensaje' => 'Elección reseteada. ' . historial_mensaje($guardarHistorial, $historial),
+    'historial' => $historial,
     'filas_especialidad_actualizadas' => $filas,
     'driver'  => $driver,
-  ]);
+  ], JSON_UNESCAPED_UNICODE);
 
 } catch (Throwable $e) {
   try {

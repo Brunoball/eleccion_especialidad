@@ -107,7 +107,25 @@ try {
       exit;
 
     case 'eleccion_resetear':
+      // Body JSON opcional: {guardar_historial: true|false, titulo_historial?, usuario?}
       require_once __DIR__ . '/../modules/elecciones/pestana_resultados/eleccion_resetear.php';
+      exit;
+
+    /* ===========================
+       HISTORIAL DE ELECCIONES
+    ============================ */
+    case 'historial_listar':
+      require_once __DIR__ . '/../modules/historial/listar.php';
+      exit;
+
+    case 'historial_detalle':
+      // GET ?id=
+      require_once __DIR__ . '/../modules/historial/detalle.php';
+      exit;
+
+    case 'historial_eliminar':
+      // Body JSON: {id}
+      require_once __DIR__ . '/../modules/historial/eliminar.php';
       exit;
 
     /* ===========================
@@ -123,6 +141,7 @@ try {
       exit;
 
     case 'reset_elecciones':
+      // Body JSON opcional: {guardar_historial: true|false, titulo_historial?, usuario?}
       require_once __DIR__ . '/../modules/ordenar/resetear_elecciones.php';
       exit;
 

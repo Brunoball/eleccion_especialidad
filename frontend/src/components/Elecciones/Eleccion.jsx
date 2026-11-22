@@ -4,6 +4,7 @@ import BASE_URL from "../../config/config";
 import Toast from "../Global/Toast";
 import PestanaEleccion from "./PestanaEleccion";
 import PestanaResultados from "./PestanaResultados";
+import PestanaHistorial from "../Historial/PestanaHistorial";
 import "./Eleccion.css";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 
@@ -95,7 +96,9 @@ export default function Eleccion() {
             <p>
               {activeTab === "eleccion"
                 ? "Asigná la especialidad de cada alumno según el orden del ranking."
-                : "Consultá, filtrá y exportá las inscripciones confirmadas."}
+                : activeTab === "resultados"
+                ? "Consultá, filtrá y exportá las inscripciones confirmadas."
+                : "Elecciones anteriores guardadas al limpiar, por fecha."}
             </p>
           </div>
         </div>
@@ -121,6 +124,16 @@ export default function Eleccion() {
             >
               <i className="fa-solid fa-square-poll-vertical" aria-hidden="true" />
               Resultados
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTab === "historial"}
+              className={`mod-tab ${activeTab === "historial" ? "is-active" : ""}`}
+              onClick={() => setActiveTab("historial")}
+            >
+              <i className="fa-solid fa-clock-rotate-left" aria-hidden="true" />
+              Historial
             </button>
           </div>
         </div>
@@ -150,8 +163,15 @@ export default function Eleccion() {
               fetchJSON={fetchJSON}
               showToast={showToast}
             />
-          ) : (
+          ) : activeTab === "resultados" ? (
             <PestanaResultados
+              BASE_URL={BASE_URL}
+              fetchJSON={fetchJSON}
+              showToast={showToast}
+              isAdmin={isAdmin}
+            />
+          ) : (
+            <PestanaHistorial
               BASE_URL={BASE_URL}
               fetchJSON={fetchJSON}
               showToast={showToast}
